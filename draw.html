@@ -151,6 +151,11 @@
 </div>
 
 <script>
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+function getSession()        { try { return JSON.parse(localStorage.getItem('wc2026_session')); } catch { return null; } }
+function setSession(profile) { localStorage.setItem('wc2026_session', JSON.stringify(profile)); }
+function clearSession()      { localStorage.removeItem('wc2026_session'); }
+
 // ── Static team data ─────────────────────────────────────────────────────────
 const TIER_LABELS = {1:'⭐ Favourite',2:'Contender',3:'Dark Horse',4:'Outsider'};
 const TIER_COLORS = {1:'rgba(245,197,24,0.9)',2:'rgba(180,180,180,0.85)',3:'rgba(180,100,50,0.85)',4:'rgba(70,95,120,0.8)'};
@@ -167,9 +172,9 @@ let wheelObj      = null;
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 (async () => {
-  const { data: { session } } = await db.auth.getSession();
+  const session = getSession();
   if (!session) { window.location.href = 'login.html'; return; }
-  currentUser = session.user;
+  currentUser = session;
 
   await loadAll();
   renderMyTeams();
@@ -181,12 +186,12 @@ async function loadAll() {
   const [teamsRes, drawsRes, profileRes, settingsRes] = await Promise.all([
     db.from('wc_teams').select('name,group_letter,tier').order('name'),
     db.from('draws').select('team_name,user_id'),
-    db.from('profiles').select('full_name,draws_allowed,draws_used').eq('id', currentUser.id).single(),
+    db.from('profiles').select('first_name,last_name,draws_allowed,draws_used').eq('id', currentUser.id).single(),
     db.from('draw_settings').select('draw_open').single()
   ]);
 
   allTeams     = teamsRes.data || [];
-  userProfile  = profileRes.data || { full_name: currentUser.email, draws_allowed: 1, draws_used: 0 };
+  userProfile  = profileRes.data || { first_name: currentUser.first_name, last_name: currentUser.last_name || '', draws_allowed: 1, draws_used: 0 };
   drawOpen     = settingsRes.data?.draw_open || false;
 
   const draws      = drawsRes.data || [];
@@ -194,7 +199,7 @@ async function loadAll() {
   myTeams         = draws.filter(d => d.user_id === currentUser.id).map(d => allTeams.find(t => t.name === d.team_name)).filter(Boolean);
   availableTeams  = allTeams.filter(t => !claimedSet.has(t.name));
 
-  document.getElementById('hdrName').textContent = userProfile.full_name;
+  document.getElementById('hdrName').textContent = userProfile.first_name + ' ' + userProfile.last_name;
 }
 
 function drawsRemaining() {
@@ -463,10 +468,7 @@ function launchConfetti() {
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
-async function signOut() {
-  await db.auth.signOut();
-  window.location.href = 'login.html';
-}
+function signOut() { clearSession(); window.location.href = 'login.html'; }
 </script>
 </body>
 </html>

@@ -160,6 +160,11 @@
 </div>
 
 <script>
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+function getSession()        { try { return JSON.parse(localStorage.getItem('wc2026_session')); } catch { return null; } }
+function setSession(profile) { localStorage.setItem('wc2026_session', JSON.stringify(profile)); }
+function clearSession()      { localStorage.removeItem('wc2026_session'); }
+
 const GROUP_INFO = {
   A:{teams:["Mexico","South Korea","South Africa","Czechia"]},
   B:{teams:["Canada","Switzerland","Qatar","Bosnia & Herz."]},
@@ -191,13 +196,11 @@ let koResultsData = {};
 let activeGroup = 'A';
 
 (async () => {
-  const { data: { session } } = await db.auth.getSession();
+  const session = getSession();
   if (!session) { window.location.href = 'login.html'; return; }
-  currentUser = session.user;
-
-  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-  if (!profile?.is_admin) { window.location.href = 'index.html'; return; }
-  currentProfile = profile;
+  if (!session.is_admin) { window.location.href = 'index.html'; return; }
+  currentUser = session;
+  currentProfile = session;
 
   await loadAll();
   renderDrawSettings();
@@ -209,14 +212,14 @@ let activeGroup = 'A';
 
 async function loadAll() {
   const [drawsRes, grRes, koRes, settingsRes] = await Promise.all([
-    db.from('draws').select('team_name, user_id, profiles(full_name)'),
+    db.from('draws').select('team_name, user_id, profiles(first_name, last_name)'),
     db.from('group_results').select('*'),
     db.from('knockout_results').select('*'),
     db.from('draw_settings').select('draw_open').single(),
   ]);
 
   ownerMap = {};
-  (drawsRes.data || []).forEach(d => { if (d.profiles?.full_name) ownerMap[d.team_name] = { name: d.profiles.full_name, uid: d.user_id }; });
+  (drawsRes.data || []).forEach(d => { if (d.profiles) ownerMap[d.team_name] = { name: d.profiles.first_name + ' ' + d.profiles.last_name, uid: d.user_id }; });
 
   groupResultsData = {};
   (grRes.data || []).forEach(r => { groupResultsData[r.match_id] = r; });
@@ -261,7 +264,7 @@ async function renderUsers() {
     const role  = u.is_super_admin ? '<span class="badge super">Super Admin</span>' : u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge user">User</span>';
     const canToggleAdmin = currentProfile.is_super_admin && u.id !== currentUser.id;
     return `<tr id="urow-${u.id}">
-      <td><strong>${u.full_name}</strong></td>
+      <td><strong>${u.first_name} ${u.last_name}</strong></td>
       <td style="color:var(--muted);font-size:14px">${u.email}</td>
       <td>${role}${canToggleAdmin ? `<button class="btn-icon" onclick="toggleAdmin('${u.id}',${u.is_admin})" style="margin-left:6px">${u.is_admin?'Remove Admin':'Make Admin'}</button>` : ''}</td>
       <td><div class="draws-ctrl">
@@ -400,7 +403,7 @@ function showToast(msg, type) {
   setTimeout(() => { t.classList.remove('show'); }, 3000);
 }
 
-async function signOut() { await db.auth.signOut(); window.location.href = 'login.html'; }
+function signOut() { clearSession(); window.location.href = 'login.html'; }
 </script>
 </body>
 </html>

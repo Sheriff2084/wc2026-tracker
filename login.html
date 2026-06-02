@@ -22,163 +22,184 @@
   .trophy{font-size:48px;display:block;margin-bottom:8px;filter:drop-shadow(0 0 16px rgba(245,197,24,0.5))}
   h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:4px;color:var(--gold);line-height:0.9;margin-bottom:4px}
   h1 span{display:block;font-size:0.45em;letter-spacing:8px;color:var(--white);opacity:0.6}
-  .sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green-light);margin-bottom:32px}
-  .divider{height:1px;background:var(--border);margin:24px 0}
+  .sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green-light);margin-bottom:28px}
+  .divider{height:1px;background:var(--border);margin:20px 0}
 
   label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:left;margin-bottom:6px}
-  input{display:block;width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:13px 16px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s;margin-bottom:16px}
+  input{display:block;width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:13px 16px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s;margin-bottom:14px}
   input:focus{border-color:var(--gold)}
   input::placeholder{color:var(--muted)}
+  input[readonly]{background:rgba(255,255,255,0.02);color:var(--muted);border-color:rgba(255,255,255,0.06);cursor:default}
 
-  .btn{width:100%;background:var(--gold);color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;border:none;border-radius:10px;padding:15px;cursor:pointer;transition:background 0.2s;margin-top:4px}
+  .name-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .name-row input{margin-bottom:0}
+  .name-row label{margin-bottom:6px}
+
+  .btn{width:100%;background:var(--gold);color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;border:none;border-radius:10px;padding:15px;cursor:pointer;transition:background 0.2s;margin-top:6px}
   .btn:hover{background:var(--gold-dark)}
   .btn:disabled{background:rgba(245,197,24,0.3);color:rgba(0,0,0,0.4);cursor:not-allowed}
+  .btn-back{background:none;border:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;margin-top:14px;display:block;width:100%;text-align:center}
+  .btn-back:hover{color:var(--white)}
 
-  .msg{margin-top:20px;padding:14px 18px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;display:none}
-  .msg.success{background:rgba(29,184,122,0.15);border:1px solid rgba(29,184,122,0.4);color:var(--green-light)}
+  .msg{margin-top:16px;padding:12px 16px;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:15px;display:none;text-align:left}
   .msg.error{background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.3);color:#ff9090}
-  .msg.info{background:rgba(245,197,24,0.1);border:1px solid var(--border);color:var(--gold)}
   .msg.show{display:block}
 
-  .note{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);margin-top:20px;line-height:1.6}
+  .step{display:none}.step.show{display:block}
 
-  .loading{display:none;flex-direction:column;align-items:center;gap:16px}
-  .loading.show{display:flex}
-  .spinner{width:40px;height:40px;border:3px solid rgba(245,197,24,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+  .step-heading{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+  .step-heading strong{color:var(--gold)}
+
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .loading-text{font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;color:var(--muted)}
 </style>
 </head>
 <body>
-
-<div class="card" id="loginCard">
+<div class="card">
   <span class="trophy">🏆</span>
   <h1><span>Allegro</span>World Cup 2026</h1>
-  <p class="sub">Office Pool</p>
+  <p class="sub">Office Pool — 2026</p>
   <div class="divider"></div>
 
-  <div id="formSection">
-    <div style="margin-bottom:16px;text-align:left">
-      <label>Your Full Name</label>
-      <input type="text" id="nameInput" placeholder="e.g. Mark Sheriff" autocomplete="name">
-    </div>
-    <div style="margin-bottom:4px;text-align:left">
-      <label>Work Email</label>
+  <!-- Step 1: email -->
+  <div class="step show" id="step1">
+    <div style="text-align:left;margin-bottom:4px">
+      <label>Your Email</label>
       <input type="email" id="emailInput" placeholder="you@allegrofunds.com.au" autocomplete="email">
     </div>
-    <button class="btn" id="submitBtn" onclick="sendMagicLink()">GET MAGIC LINK</button>
-    <div class="msg" id="msg"></div>
-    <p class="note">We'll email you a one-click sign-in link — no password needed.<br>If you've registered before, just enter your email.</p>
+    <button class="btn" id="continueBtn" onclick="checkEmail()">CONTINUE</button>
+    <div class="msg error" id="msg1"></div>
   </div>
 
-  <div class="loading" id="loadingSection">
-    <div class="spinner"></div>
-    <div class="loading-text">Signing you in...</div>
+  <!-- Step 2: register (new user) -->
+  <div class="step" id="step2">
+    <p class="step-heading">Welcome! You're new here.<br>Enter your name to join the pool.</p>
+    <div class="name-row" style="margin-bottom:14px">
+      <div>
+        <label>First Name</label>
+        <input type="text" id="firstInput" placeholder="Mark" autocomplete="given-name">
+      </div>
+      <div>
+        <label>Last Name</label>
+        <input type="text" id="lastInput" placeholder="Sheriff" autocomplete="family-name">
+      </div>
+    </div>
+    <div style="text-align:left;margin-bottom:4px">
+      <label>Email</label>
+      <input type="email" id="emailDisplay" readonly>
+    </div>
+    <button class="btn" id="registerBtn" onclick="register()">JOIN THE POOL</button>
+    <button class="btn-back" onclick="goBack()">← Use a different email</button>
+    <div class="msg error" id="msg2"></div>
   </div>
 </div>
 
 <script>
-  // ── Handle magic link callback ───────────────────────────────────────────
-  async function handleAuthCallback() {
-    const hash = window.location.hash;
-    if (!hash.includes('access_token') && !hash.includes('error')) return;
+function getSession()        { try { return JSON.parse(localStorage.getItem('wc2026_session')); } catch { return null; } }
+function setSession(profile) { localStorage.setItem('wc2026_session', JSON.stringify(profile)); }
 
-    document.getElementById('formSection').style.display = 'none';
-    document.getElementById('loadingSection').classList.add('show');
+// If already logged in, skip straight through
+(async () => {
+  const sess = getSession();
+  if (sess) { await redirect(sess); }
+})();
 
-    db.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        await ensureProfile(session);
-        await redirectAfterLogin();
-      } else if (hash.includes('error')) {
-        showMsg('Link expired or invalid. Please request a new one.', 'error');
-        document.getElementById('formSection').style.display = 'block';
-        document.getElementById('loadingSection').classList.remove('show');
-      }
-    });
+async function checkEmail() {
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) { showMsg('msg1', 'Please enter a valid email.'); return; }
+
+  setLoading('continueBtn', true, 'CHECKING...');
+
+  const { data: profile, error } = await db
+    .from('profiles')
+    .select('*')
+    .eq('email', email)
+    .maybeSingle();
+
+  setLoading('continueBtn', false, 'CONTINUE');
+
+  if (error) { showMsg('msg1', 'Error: ' + error.message); return; }
+
+  if (profile) {
+    // Returning user — log straight in
+    setSession(profile);
+    await redirect(profile);
+  } else {
+    // New user — show registration step
+    document.getElementById('emailDisplay').value = email;
+    document.getElementById('step1').classList.remove('show');
+    document.getElementById('step2').classList.add('show');
+    document.getElementById('firstInput').focus();
   }
+}
 
-  async function ensureProfile(session) {
-    const { data: profile } = await db.from('profiles').select('id').eq('id', session.user.id).maybeSingle();
-    if (!profile) {
-      const pendingName = localStorage.getItem('wc2026_name') || session.user.email.split('@')[0];
-      await db.from('profiles').insert({
-        id: session.user.id,
-        full_name: pendingName,
-        email: session.user.email
-      });
-      localStorage.removeItem('wc2026_name');
+async function register() {
+  const first = document.getElementById('firstInput').value.trim();
+  const last  = document.getElementById('lastInput').value.trim();
+  const email = document.getElementById('emailDisplay').value.trim().toLowerCase();
+
+  if (!first) { showMsg('msg2', 'Please enter your first name.'); return; }
+  if (!last)  { showMsg('msg2', 'Please enter your last name.');  return; }
+
+  setLoading('registerBtn', true, 'JOINING...');
+
+  const { data: profile, error } = await db
+    .from('profiles')
+    .insert({ first_name: first, last_name: last, email })
+    .select()
+    .single();
+
+  setLoading('registerBtn', false, 'JOIN THE POOL');
+
+  if (error) {
+    if (error.code === '23505') {
+      // Race condition — email was registered between check and insert
+      const { data: existing } = await db.from('profiles').select('*').eq('email', email).single();
+      if (existing) { setSession(existing); await redirect(existing); return; }
     }
+    showMsg('msg2', 'Error: ' + error.message);
+    return;
   }
 
-  async function redirectAfterLogin() {
-    const { data: { user } } = await db.auth.getUser();
-    if (!user) return;
+  setSession(profile);
+  await redirect(profile);
+}
 
-    const [profileRes, settingsRes] = await Promise.all([
-      db.from('profiles').select('is_admin, draws_allowed, draws_used').eq('id', user.id).single(),
-      db.from('draw_settings').select('draw_open').single()
-    ]);
-
-    const profile  = profileRes.data;
-    const drawOpen = settingsRes.data?.draw_open;
-    const hasDraws = profile && (profile.draws_used < profile.draws_allowed);
-
-    if (drawOpen && hasDraws) {
-      window.location.href = 'draw.html';
-    } else {
-      window.location.href = 'index.html';
-    }
+async function redirect(profile) {
+  const { data: settings } = await db.from('draw_settings').select('draw_open').single();
+  const drawOpen  = settings?.draw_open;
+  const hasDraws  = profile.draws_used < profile.draws_allowed;
+  if (drawOpen && hasDraws) {
+    window.location.href = 'draw.html';
+  } else {
+    window.location.href = 'index.html';
   }
+}
 
-  // ── Send magic link ──────────────────────────────────────────────────────
-  async function sendMagicLink() {
-    const name  = document.getElementById('nameInput').value.trim();
-    const email = document.getElementById('emailInput').value.trim().toLowerCase();
+function goBack() {
+  document.getElementById('step2').classList.remove('show');
+  document.getElementById('step1').classList.add('show');
+  document.getElementById('msg2').classList.remove('show');
+}
 
-    if (!email || !email.includes('@')) { showMsg('Please enter a valid email address.', 'error'); return; }
+function showMsg(id, text) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.classList.add('show');
+}
 
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.textContent = 'SENDING...';
+function setLoading(btnId, loading, text) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span>${text}` : text;
+}
 
-    // Store name for use after callback
-    if (name) localStorage.setItem('wc2026_name', name);
-
-    const { error } = await db.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + '/login.html' }
-    });
-
-    if (error) {
-      showMsg('Something went wrong: ' + error.message, 'error');
-      btn.disabled = false;
-      btn.textContent = 'GET MAGIC LINK';
-    } else {
-      showMsg('✓ Check your inbox — we sent a magic sign-in link to ' + email, 'success');
-      btn.textContent = 'LINK SENT';
-    }
-  }
-
-  function showMsg(text, type) {
-    const el = document.getElementById('msg');
-    el.textContent = text;
-    el.className = 'msg ' + type + ' show';
-  }
-
-  // Allow Enter key to submit
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendMagicLink();
-  });
-
-  // Check if this is a callback from a magic link
-  handleAuthCallback();
-
-  // If already logged in, redirect immediately
-  (async () => {
-    const { data: { session } } = await db.auth.getSession();
-    if (session) await redirectAfterLogin();
-  })();
+// Allow Enter key on both steps
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('step1').classList.contains('show')) checkEmail();
+  else if (document.getElementById('step2').classList.contains('show')) register();
+});
 </script>
 </body>
 </html>

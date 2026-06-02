@@ -163,6 +163,10 @@
 <div id="pane-leaderboard" class="pane"><div class="container" id="lb-inner"></div></div>
 
 <script>
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+function getSession()        { try { return JSON.parse(localStorage.getItem('wc2026_session')); } catch { return null; } }
+function clearSession()      { localStorage.removeItem('wc2026_session'); }
+
 // ── Static WC2026 data (schedule never changes) ──────────────────────────────
 const GROUP_INFO = {
   A:{teams:["Mexico","South Korea","South Africa","Czechia"],dates:"11–24 Jun"},
@@ -256,14 +260,14 @@ function computeStandings() {
 
 async function loadData() {
   const [drawsRes, groupRes, knockoutRes] = await Promise.all([
-    db.from('draws').select('team_name, profiles(full_name)'),
+    db.from('draws').select('team_name, profiles(first_name, last_name)'),
     db.from('group_results').select('*'),
     db.from('knockout_results').select('*'),
   ]);
 
   ownerMap = {};
   (drawsRes.data || []).forEach(d => {
-    if (d.profiles?.full_name) ownerMap[d.team_name] = d.profiles.full_name;
+    if (d.profiles) ownerMap[d.team_name] = d.profiles.first_name + ' ' + d.profiles.last_name;
   });
 
   results = {};
@@ -276,19 +280,18 @@ async function loadData() {
 }
 
 async function setupNav() {
-  const { data: { session } } = await db.auth.getSession();
+  const session = getSession();
   const nav = document.getElementById('hdrNav');
   if (!session) {
     nav.innerHTML = `<a href="login.html" class="btn-sm gold">Sign In</a>`;
     return;
   }
-  const { data: profile } = await db.from('profiles').select('full_name,is_admin,draws_allowed,draws_used').eq('id', session.user.id).single();
   const { data: settings } = await db.from('draw_settings').select('draw_open').single();
-  const hasDraws = profile && (profile.draws_used < profile.draws_allowed) && settings?.draw_open;
+  const hasDraws = (session.draws_used < session.draws_allowed) && settings?.draw_open;
   nav.innerHTML = `
-    ${profile?.is_admin ? `<a href="admin.html" class="btn-sm">Admin</a>` : ''}
+    ${session.is_admin ? `<a href="admin.html" class="btn-sm">Admin</a>` : ''}
     ${hasDraws ? `<a href="draw.html" class="btn-sm gold">⭐ Draw Your Team</a>` : ''}
-    <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)">${profile?.full_name||''}</span>
+    <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)">${session.first_name} ${session.last_name}</span>
     <button class="btn-sm" onclick="signOut()">Sign Out</button>`;
 }
 
@@ -319,7 +322,7 @@ function switchTab(id, btn) {
   btn.classList.add('on');
 }
 
-async function signOut() { await db.auth.signOut(); window.location.reload(); }
+function signOut() { clearSession(); window.location.reload(); }
 
 // ── Groups tab ────────────────────────────────────────────────────────────────
 function renderGroups() {
