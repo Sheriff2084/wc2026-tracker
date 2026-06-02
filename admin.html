@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allegro WC2026 — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<style>
+  :root{
+    --green:#0a6640;--green-mid:#0d8a56;--green-light:#1db87a;
+    --gold:#f5c518;--gold-dark:#d4a800;
+    --dark:#0a0f14;--darker:#060a0e;--mid:#141e28;--card:#1a2535;
+    --border:rgba(245,197,24,0.2);--white:#f0f4f8;--muted:#8899aa;
+    --red:#ff4444;--red-soft:rgba(255,68,68,0.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Barlow',sans-serif;background:var(--darker);color:var(--white);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(180deg,transparent,transparent 40px,rgba(255,255,255,0.015) 40px,rgba(255,255,255,0.015) 80px);pointer-events:none;z-index:0}
+
+  .hdr{position:relative;z-index:1;background:linear-gradient(135deg,#0a1520 0%,#0e2d1a 40%,#0a6640 100%);border-bottom:3px solid var(--gold);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .hdr-brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--gold)}
+  .hdr-right{display:flex;gap:10px;align-items:center}
+  .btn-sm{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block}
+  .btn-sm:hover{color:var(--white);border-color:rgba(255,255,255,0.35)}
+
+  .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:28px 18px}
+
+  /* Sections */
+  .section{background:var(--card);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;margin-bottom:24px}
+  .section-hd{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(90deg,rgba(10,102,64,0.2),transparent)}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold)}
+  .section-body{padding:20px 22px}
+
+  /* Toggle */
+  .toggle-wrap{display:flex;align-items:center;gap:14px}
+  .toggle{position:relative;width:54px;height:28px;flex-shrink:0}
+  .toggle input{opacity:0;width:0;height:0;position:absolute}
+  .toggle-track{position:absolute;inset:0;background:rgba(255,255,255,0.1);border-radius:14px;transition:background 0.3s;cursor:pointer}
+  .toggle input:checked+.toggle-track{background:var(--green-mid)}
+  .toggle-track::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform 0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+  .toggle input:checked+.toggle-track::after{transform:translateX(26px)}
+  .toggle-lbl{font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:0.5px}
+  .draw-status{font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:1px;padding:5px 12px;border-radius:6px;text-transform:uppercase}
+  .draw-status.open{background:rgba(29,184,122,0.15);color:var(--green-light);border:1px solid rgba(29,184,122,0.35)}
+  .draw-status.closed{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
+
+  /* Users table */
+  .users-table{width:100%;border-collapse:collapse}
+  .users-table th{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:8px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.07)}
+  .users-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;font-family:'Barlow Condensed',sans-serif;font-size:16px}
+  .users-table tr:last-child td{border-bottom:none}
+  .draws-ctrl{display:flex;align-items:center;gap:8px}
+  .draws-val{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);min-width:28px;text-align:center}
+  .btn-circle{width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);background:transparent;color:var(--white);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
+  .btn-circle:hover{border-color:var(--gold);color:var(--gold)}
+  .badge{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;padding:3px 8px;border-radius:4px;text-transform:uppercase}
+  .badge.admin{background:rgba(245,197,24,0.15);color:var(--gold);border:1px solid rgba(245,197,24,0.3)}
+  .badge.super{background:rgba(29,184,122,0.15);color:var(--green-light);border:1px solid rgba(29,184,122,0.3)}
+  .badge.user{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
+  .team-chip{display:inline-block;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:2px 8px;font-size:13px;margin:2px;font-family:'Barlow Condensed',sans-serif}
+  .btn-icon{border:none;background:transparent;cursor:pointer;color:var(--muted);font-size:14px;padding:4px 8px;border-radius:5px;transition:all 0.2s;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;font-size:12px}
+  .btn-icon:hover{color:var(--gold);background:rgba(255,255,255,0.06)}
+
+  /* Results form */
+  .group-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+  .gtab{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s}
+  .gtab:hover{color:var(--white)}.gtab.on{background:var(--green);border-color:var(--green-mid);color:#fff}
+  .match-form-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+  .match-form-row:last-child{border-bottom:none}
+  .mf-team{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mf-team.right{text-align:right}
+  .mf-owner{font-size:12px;color:var(--gold);font-family:'Barlow Condensed'}
+  .score-input{width:52px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;color:var(--white);font-family:'Bebas Neue',sans-serif;font-size:22px;text-align:center;outline:none;transition:border-color 0.2s}
+  .score-input:focus{border-color:var(--gold)}
+  .mf-dash{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--muted)}
+  .played-cb{width:18px;height:18px;accent-color:var(--green-light);cursor:pointer;flex-shrink:0}
+  .save-btn{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:10px 28px;cursor:pointer;transition:background 0.2s;margin-top:16px}
+  .save-btn:hover{background:var(--gold-dark)}
+  .save-btn:disabled{background:rgba(245,197,24,0.25);color:rgba(0,0,0,0.3);cursor:not-allowed}
+
+  /* Knockout form */
+  .ko-section{margin-bottom:22px}
+  .ko-round-label{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06)}
+
+  /* Toast */
+  .toast{position:fixed;bottom:20px;right:18px;padding:11px 18px;border-radius:9px;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:0.5px;transform:translateY(60px);opacity:0;transition:all 0.3s;z-index:300}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.ok{background:var(--green);border:1px solid var(--green-light);color:#fff}
+  .toast.err{background:var(--red-soft);border:1px solid var(--red);color:#ff9090}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="hdr">
+  <div class="hdr-brand">🏆 WC2026 Admin</div>
+  <div class="hdr-right">
+    <a href="index.html" class="btn-sm">Tracker</a>
+    <button class="btn-sm" onclick="signOut()">Sign Out</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Draw settings -->
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">Draw Settings</span>
+      <span class="draw-status closed" id="drawStatusBadge">Closed</span>
+    </div>
+    <div class="section-body">
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" id="drawToggle" onchange="toggleDraw(this.checked)">
+          <div class="toggle-track"></div>
+        </label>
+        <span class="toggle-lbl">Draw is <strong id="drawStatusText">closed</strong> — participants <span id="drawStatusCan">cannot</span> spin the wheel</span>
+      </div>
+      <p style="margin-top:12px;font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)">
+        Open the draw when everyone has registered. Once open, any registered user can spin. Close it when all teams are claimed.
+      </p>
+    </div>
+  </div>
+
+  <!-- Users -->
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">Participants</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)" id="userCountLabel"></span>
+    </div>
+    <div class="section-body" style="padding:0">
+      <div style="overflow-x:auto">
+        <table class="users-table">
+          <thead><tr>
+            <th>Name</th><th>Email</th><th>Role</th><th>Draws</th><th>Their Teams</th><th></th>
+          </tr></thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group Results -->
+  <div class="section">
+    <div class="section-hd"><span class="section-title">Group Stage Results</span></div>
+    <div class="section-body">
+      <div class="group-tabs" id="groupTabs"></div>
+      <div id="groupMatchForms"></div>
+    </div>
+  </div>
+
+  <!-- Knockout Results -->
+  <div class="section">
+    <div class="section-hd"><span class="section-title">Knockout Results</span></div>
+    <div class="section-body" id="koForms"></div>
+  </div>
+
+</div>
+
+<script>
+const GROUP_INFO = {
+  A:{teams:["Mexico","South Korea","South Africa","Czechia"]},
+  B:{teams:["Canada","Switzerland","Qatar","Bosnia & Herz."]},
+  C:{teams:["Brazil","Morocco","Scotland","Haiti"]},
+  D:{teams:["United States","Australia","Paraguay","Türkiye"]},
+  E:{teams:["Germany","Ivory Coast","Ecuador","Curaçao"]},
+  F:{teams:["Netherlands","Japan","Sweden","Tunisia"]},
+  G:{teams:["Belgium","Egypt","Iran","New Zealand"]},
+  H:{teams:["Spain","Cape Verde","Saudi Arabia","Uruguay"]},
+  I:{teams:["France","Senegal","Iraq","Norway"]},
+  J:{teams:["Argentina","Algeria","Austria","Jordan"]},
+  K:{teams:["Portugal","DR Congo","Uzbekistan","Colombia"]},
+  L:{teams:["England","Croatia","Ghana","Panama"]},
+};
+
+const KO_ROUNDS = [
+  {label:'Round of 32',ids:['R32-1','R32-2','R32-3','R32-4','R32-5','R32-6','R32-7','R32-8','R32-9','R32-10','R32-11','R32-12','R32-13','R32-14','R32-15','R32-16']},
+  {label:'Round of 16',ids:['R16-1','R16-2','R16-3','R16-4','R16-5','R16-6','R16-7','R16-8']},
+  {label:'Quarter-Finals',ids:['QF-1','QF-2','QF-3','QF-4']},
+  {label:'Semi-Finals',ids:['SF-1','SF-2']},
+  {label:'Final',ids:['FINAL']},
+];
+
+let currentUser = null;
+let currentProfile = null;
+let ownerMap = {};
+let groupResultsData = {};
+let koResultsData = {};
+let activeGroup = 'A';
+
+(async () => {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { window.location.href = 'login.html'; return; }
+  currentUser = session.user;
+
+  const { data: profile } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (!profile?.is_admin) { window.location.href = 'index.html'; return; }
+  currentProfile = profile;
+
+  await loadAll();
+  renderDrawSettings();
+  renderUsers();
+  renderGroupTabs();
+  renderGroupForms(activeGroup);
+  renderKoForms();
+})();
+
+async function loadAll() {
+  const [drawsRes, grRes, koRes, settingsRes] = await Promise.all([
+    db.from('draws').select('team_name, user_id, profiles(full_name)'),
+    db.from('group_results').select('*'),
+    db.from('knockout_results').select('*'),
+    db.from('draw_settings').select('draw_open').single(),
+  ]);
+
+  ownerMap = {};
+  (drawsRes.data || []).forEach(d => { if (d.profiles?.full_name) ownerMap[d.team_name] = { name: d.profiles.full_name, uid: d.user_id }; });
+
+  groupResultsData = {};
+  (grRes.data || []).forEach(r => { groupResultsData[r.match_id] = r; });
+
+  koResultsData = {};
+  (koRes.data || []).forEach(r => { koResultsData[r.match_id] = r; });
+
+  window._drawOpen = settingsRes.data?.draw_open || false;
+}
+
+// ── Draw settings ──────────────────────────────────────────────────────────
+function renderDrawSettings() {
+  const open = window._drawOpen;
+  document.getElementById('drawToggle').checked     = open;
+  document.getElementById('drawStatusBadge').textContent = open ? 'Open' : 'Closed';
+  document.getElementById('drawStatusBadge').className   = 'draw-status ' + (open ? 'open' : 'closed');
+  document.getElementById('drawStatusText').textContent  = open ? 'open' : 'closed';
+  document.getElementById('drawStatusCan').textContent   = open ? 'can' : 'cannot';
+}
+
+async function toggleDraw(open) {
+  const { error } = await db.from('draw_settings').update({ draw_open: open, updated_at: new Date().toISOString() }).eq('id', 1);
+  if (error) { showToast('Error: ' + error.message, 'err'); document.getElementById('drawToggle').checked = !open; return; }
+  window._drawOpen = open;
+  renderDrawSettings();
+  showToast('Draw ' + (open ? 'opened ✓' : 'closed ✓'), 'ok');
+}
+
+// ── Users ────────────────────────────────────────────────────────────────────
+async function renderUsers() {
+  const { data: users } = await db.from('profiles').select('*').order('created_at');
+  if (!users) return;
+
+  // Build a per-user team map
+  const { data: draws } = await db.from('draws').select('team_name, user_id');
+  const teamsByUser = {};
+  (draws || []).forEach(d => { (teamsByUser[d.user_id] = teamsByUser[d.user_id] || []).push(d.team_name); });
+
+  document.getElementById('userCountLabel').textContent = users.length + ' registered';
+  document.getElementById('usersTableBody').innerHTML = users.map(u => {
+    const teams = (teamsByUser[u.id] || []).map(t => `<span class="team-chip">${t}</span>`).join('') || '<span style="color:var(--muted);font-size:13px">none yet</span>';
+    const role  = u.is_super_admin ? '<span class="badge super">Super Admin</span>' : u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge user">User</span>';
+    const canToggleAdmin = currentProfile.is_super_admin && u.id !== currentUser.id;
+    return `<tr id="urow-${u.id}">
+      <td><strong>${u.full_name}</strong></td>
+      <td style="color:var(--muted);font-size:14px">${u.email}</td>
+      <td>${role}${canToggleAdmin ? `<button class="btn-icon" onclick="toggleAdmin('${u.id}',${u.is_admin})" style="margin-left:6px">${u.is_admin?'Remove Admin':'Make Admin'}</button>` : ''}</td>
+      <td><div class="draws-ctrl">
+        <button class="btn-circle" onclick="changeDraws('${u.id}',${u.draws_allowed},-1)">−</button>
+        <div class="draws-val" id="draws-${u.id}">${u.draws_allowed}</div>
+        <button class="btn-circle" onclick="changeDraws('${u.id}',${u.draws_allowed},+1)">+</button>
+        <span style="font-size:13px;color:var(--muted)">(${u.draws_used} used)</span>
+      </div></td>
+      <td>${teams}</td>
+      <td></td>
+    </tr>`;
+  }).join('');
+}
+
+async function changeDraws(uid, current, delta) {
+  const next = Math.max(1, Math.min(4, current + delta));
+  const { error } = await db.from('profiles').update({ draws_allowed: next }).eq('id', uid);
+  if (error) { showToast('Error: ' + error.message, 'err'); return; }
+  document.getElementById('draws-' + uid).textContent = next;
+  // update in-place by re-rendering
+  renderUsers();
+}
+
+async function toggleAdmin(uid, currentlyAdmin) {
+  const { error } = await db.from('profiles').update({ is_admin: !currentlyAdmin }).eq('id', uid);
+  if (error) { showToast('Error: ' + error.message, 'err'); return; }
+  renderUsers();
+  showToast((!currentlyAdmin ? 'Admin granted' : 'Admin removed') + ' ✓', 'ok');
+}
+
+// ── Group forms ──────────────────────────────────────────────────────────────
+function groupMatches(g) {
+  const t = GROUP_INFO[g].teams;
+  return [
+    {id:`${g}M1`,t1:t[0],t2:t[1]},{id:`${g}M2`,t1:t[0],t2:t[2]},
+    {id:`${g}M3`,t1:t[0],t2:t[3]},{id:`${g}M4`,t1:t[1],t2:t[2]},
+    {id:`${g}M5`,t1:t[1],t2:t[3]},{id:`${g}M6`,t1:t[2],t2:t[3]},
+  ];
+}
+
+function renderGroupTabs() {
+  document.getElementById('groupTabs').innerHTML = Object.keys(GROUP_INFO).map(g =>
+    `<button class="gtab ${g===activeGroup?'on':''}" onclick="switchGroup('${g}',this)">Group ${g}</button>`
+  ).join('');
+}
+
+function switchGroup(g, btn) {
+  activeGroup = g;
+  document.querySelectorAll('.gtab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderGroupForms(g);
+}
+
+function renderGroupForms(g) {
+  const ms = groupMatches(g);
+  document.getElementById('groupMatchForms').innerHTML = `
+    <div>${ms.map(m => {
+      const r = groupResultsData[m.id] || {};
+      const o1 = ownerMap[m.t1]?.name, o2 = ownerMap[m.t2]?.name;
+      return `<div class="match-form-row">
+        <div style="flex:1;min-width:0">
+          <div class="mf-team">${m.t1}</div>${o1?`<div class="mf-owner">▸ ${o1}</div>`:''}
+        </div>
+        <input type="number" class="score-input" id="s1-${m.id}" value="${r.score1??''}" min="0" max="99" placeholder="–">
+        <span class="mf-dash">–</span>
+        <input type="number" class="score-input" id="s2-${m.id}" value="${r.score2??''}" min="0" max="99" placeholder="–">
+        <div style="flex:1;min-width:0;text-align:right">
+          <div class="mf-team right">${m.t2}</div>${o2?`<div class="mf-owner">${o2} ▸</div>`:''}
+        </div>
+        <input type="checkbox" class="played-cb" id="p-${m.id}" title="Mark as played" ${r.played?'checked':''}>
+      </div>`;
+    }).join('')}</div>
+    <button class="save-btn" onclick="saveGroupResults('${g}')">SAVE GROUP ${g}</button>`;
+}
+
+async function saveGroupResults(g) {
+  const ms = groupMatches(g);
+  const rows = ms.map(m => {
+    const s1  = document.getElementById('s1-' + m.id).value;
+    const s2  = document.getElementById('s2-' + m.id).value;
+    const played = document.getElementById('p-' + m.id).checked;
+    return { match_id: m.id, team1: m.t1, score1: s1 !== '' ? +s1 : null, team2: m.t2, score2: s2 !== '' ? +s2 : null, played };
+  });
+
+  const btn = document.querySelector('.save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'SAVING...'; }
+
+  const { error } = await db.from('group_results').upsert(rows, { onConflict: 'match_id' });
+  if (error) { showToast('Error: ' + error.message, 'err'); }
+  else { rows.forEach(r => { groupResultsData[r.match_id] = r; }); showToast('Group ' + g + ' saved ✓', 'ok'); }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'SAVE GROUP ' + g; }
+}
+
+// ── Knockout forms ────────────────────────────────────────────────────────────
+function renderKoForms() {
+  document.getElementById('koForms').innerHTML = KO_ROUNDS.map(round => `
+    <div class="ko-section">
+      <div class="ko-round-label">${round.label}</div>
+      ${round.ids.map(id => {
+        const r = koResultsData[id] || {};
+        return `<div class="match-form-row">
+          <input type="text" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none" id="kow-${id}" placeholder="Winner (team name)" value="${r.winner||''}">
+          <input type="number" class="score-input" id="kos1-${id}" placeholder="–" value="${r.score1??''}">
+          <span class="mf-dash">–</span>
+          <input type="number" class="score-input" id="kos2-${id}" placeholder="–" value="${r.score2??''}">
+          <input type="text" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none" id="kol-${id}" placeholder="Loser (team name)" value="${r.loser||''}">
+          <input type="checkbox" class="played-cb" id="kop-${id}" title="Played" ${r.played?'checked':''}>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;white-space:nowrap">${id}</span>
+        </div>`;
+      }).join('')}
+      <button class="save-btn" onclick="saveKoRound('${round.label}',${JSON.stringify(round.ids)})">SAVE ${round.label.toUpperCase()}</button>
+    </div>`).join('');
+}
+
+async function saveKoRound(label, ids) {
+  const rows = ids.map(id => ({
+    match_id: id,
+    winner: document.getElementById('kow-'+id).value.trim() || null,
+    loser:  document.getElementById('kol-'+id).value.trim() || null,
+    score1: document.getElementById('kos1-'+id).value !== '' ? +document.getElementById('kos1-'+id).value : null,
+    score2: document.getElementById('kos2-'+id).value !== '' ? +document.getElementById('kos2-'+id).value : null,
+    played: document.getElementById('kop-'+id).checked,
+  }));
+
+  const { error } = await db.from('knockout_results').upsert(rows, { onConflict: 'match_id' });
+  if (error) { showToast('Error: ' + error.message, 'err'); }
+  else { rows.forEach(r => { koResultsData[r.match_id] = r; }); showToast(label + ' saved ✓', 'ok'); }
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+async function signOut() { await db.auth.signOut(); window.location.href = 'login.html'; }
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allegro WC2026 — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<style>
+  :root{
+    --green:#0a6640;--green-mid:#0d8a56;--green-light:#1db87a;
+    --gold:#f5c518;--gold-dark:#d4a800;
+    --dark:#0a0f14;--darker:#060a0e;--mid:#141e28;--card:#1a2535;
+    --border:rgba(245,197,24,0.2);--white:#f0f4f8;--muted:#8899aa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Barlow',sans-serif;background:var(--darker);color:var(--white);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(180deg,transparent,transparent 40px,rgba(255,255,255,0.015) 40px,rgba(255,255,255,0.015) 80px);pointer-events:none}
+
+  .card{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:40px 36px;width:100%;max-width:420px;text-align:center}
+  .trophy{font-size:48px;display:block;margin-bottom:8px;filter:drop-shadow(0 0 16px rgba(245,197,24,0.5))}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:4px;color:var(--gold);line-height:0.9;margin-bottom:4px}
+  h1 span{display:block;font-size:0.45em;letter-spacing:8px;color:var(--white);opacity:0.6}
+  .sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green-light);margin-bottom:32px}
+  .divider{height:1px;background:var(--border);margin:24px 0}
+
+  label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:left;margin-bottom:6px}
+  input{display:block;width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:13px 16px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s;margin-bottom:16px}
+  input:focus{border-color:var(--gold)}
+  input::placeholder{color:var(--muted)}
+
+  .btn{width:100%;background:var(--gold);color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;border:none;border-radius:10px;padding:15px;cursor:pointer;transition:background 0.2s;margin-top:4px}
+  .btn:hover{background:var(--gold-dark)}
+  .btn:disabled{background:rgba(245,197,24,0.3);color:rgba(0,0,0,0.4);cursor:not-allowed}
+
+  .msg{margin-top:20px;padding:14px 18px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:0.3px;display:none}
+  .msg.success{background:rgba(29,184,122,0.15);border:1px solid rgba(29,184,122,0.4);color:var(--green-light)}
+  .msg.error{background:rgba(255,80,80,0.12);border:1px solid rgba(255,80,80,0.3);color:#ff9090}
+  .msg.info{background:rgba(245,197,24,0.1);border:1px solid var(--border);color:var(--gold)}
+  .msg.show{display:block}
+
+  .note{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);margin-top:20px;line-height:1.6}
+
+  .loading{display:none;flex-direction:column;align-items:center;gap:16px}
+  .loading.show{display:flex}
+  .spinner{width:40px;height:40px;border:3px solid rgba(245,197,24,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="card" id="loginCard">
+  <span class="trophy">🏆</span>
+  <h1><span>Allegro</span>World Cup 2026</h1>
+  <p class="sub">Office Pool</p>
+  <div class="divider"></div>
+
+  <div id="formSection">
+    <div style="margin-bottom:16px;text-align:left">
+      <label>Your Full Name</label>
+      <input type="text" id="nameInput" placeholder="e.g. Mark Sheriff" autocomplete="name">
+    </div>
+    <div style="margin-bottom:4px;text-align:left">
+      <label>Work Email</label>
+      <input type="email" id="emailInput" placeholder="you@allegrofunds.com.au" autocomplete="email">
+    </div>
+    <button class="btn" id="submitBtn" onclick="sendMagicLink()">GET MAGIC LINK</button>
+    <div class="msg" id="msg"></div>
+    <p class="note">We'll email you a one-click sign-in link — no password needed.<br>If you've registered before, just enter your email.</p>
+  </div>
+
+  <div class="loading" id="loadingSection">
+    <div class="spinner"></div>
+    <div class="loading-text">Signing you in...</div>
+  </div>
+</div>
+
+<script>
+  // ── Handle magic link callback ───────────────────────────────────────────
+  async function handleAuthCallback() {
+    const hash = window.location.hash;
+    if (!hash.includes('access_token') && !hash.includes('error')) return;
+
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('loadingSection').classList.add('show');
+
+    db.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        await ensureProfile(session);
+        await redirectAfterLogin();
+      } else if (hash.includes('error')) {
+        showMsg('Link expired or invalid. Please request a new one.', 'error');
+        document.getElementById('formSection').style.display = 'block';
+        document.getElementById('loadingSection').classList.remove('show');
+      }
+    });
+  }
+
+  async function ensureProfile(session) {
+    const { data: profile } = await db.from('profiles').select('id').eq('id', session.user.id).maybeSingle();
+    if (!profile) {
+      const pendingName = localStorage.getItem('wc2026_name') || session.user.email.split('@')[0];
+      await db.from('profiles').insert({
+        id: session.user.id,
+        full_name: pendingName,
+        email: session.user.email
+      });
+      localStorage.removeItem('wc2026_name');
+    }
+  }
+
+  async function redirectAfterLogin() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    const [profileRes, settingsRes] = await Promise.all([
+      db.from('profiles').select('is_admin, draws_allowed, draws_used').eq('id', user.id).single(),
+      db.from('draw_settings').select('draw_open').single()
+    ]);
+
+    const profile  = profileRes.data;
+    const drawOpen = settingsRes.data?.draw_open;
+    const hasDraws = profile && (profile.draws_used < profile.draws_allowed);
+
+    if (drawOpen && hasDraws) {
+      window.location.href = 'draw.html';
+    } else {
+      window.location.href = 'index.html';
+    }
+  }
+
+  // ── Send magic link ──────────────────────────────────────────────────────
+  async function sendMagicLink() {
+    const name  = document.getElementById('nameInput').value.trim();
+    const email = document.getElementById('emailInput').value.trim().toLowerCase();
+
+    if (!email || !email.includes('@')) { showMsg('Please enter a valid email address.', 'error'); return; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'SENDING...';
+
+    // Store name for use after callback
+    if (name) localStorage.setItem('wc2026_name', name);
+
+    const { error } = await db.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/login.html' }
+    });
+
+    if (error) {
+      showMsg('Something went wrong: ' + error.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'GET MAGIC LINK';
+    } else {
+      showMsg('✓ Check your inbox — we sent a magic sign-in link to ' + email, 'success');
+      btn.textContent = 'LINK SENT';
+    }
+  }
+
+  function showMsg(text, type) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.className = 'msg ' + type + ' show';
+  }
+
+  // Allow Enter key to submit
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMagicLink();
+  });
+
+  // Check if this is a callback from a magic link
+  handleAuthCallback();
+
+  // If already logged in, redirect immediately
+  (async () => {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) await redirectAfterLogin();
+  })();
+</script>
+</body>
+</html>
