@@ -255,6 +255,7 @@ const R32_MATCHES = [
 
 // ── Live data (from Supabase) ────────────────────────────────────────────────
 let ownerMap          = {};
+let avatarMap         = {};
 let results           = {};
 let knockoutMap       = {};
 let groupStandings    = {};
@@ -304,16 +305,19 @@ function computeStandings() {
 
 async function loadData() {
   const [drawsRes, groupRes, knockoutRes, profilesRes] = await Promise.all([
-    db.from('draws').select('team_name, profiles(first_name, last_name)'),
+    db.from('draws').select('team_name, profiles(first_name, last_name, avatar_url)'),
     db.from('group_results').select('*'),
     db.from('knockout_results').select('*'),
     db.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
   totalParticipants = profilesRes.count || 0;
 
-  ownerMap = {};
+  ownerMap = {}; avatarMap = {};
   (drawsRes.data || []).forEach(d => {
-    if (d.profiles) ownerMap[d.team_name] = d.profiles.first_name + ' ' + d.profiles.last_name;
+    if (d.profiles) {
+      ownerMap[d.team_name]  = d.profiles.first_name + ' ' + d.profiles.last_name;
+      avatarMap[d.team_name] = d.profiles.avatar_url || null;
+    }
   });
 
   results = {};
@@ -659,10 +663,19 @@ function renderLeaderboard(){
   const ro={'Champion':6,'Into Final':5,'Into SF':4,'Into QF':3,'Into R16':2,'Group stage':1};
   inR.sort((a,b)=>(ro[b.status]||0)-(ro[a.status]||0)||a.person.localeCompare(b.person));
   outR.sort((a,b)=>a.person.localeCompare(b.person));
-  const rowHTML=(r,alive)=>`<div class="status-row ${alive?'alive':'dead'}">
-    <div><div class="sr-team">${r.team}</div><div class="sr-person">▸ ${r.person}</div></div>
-    <div class="sr-status ${alive?'in':'out'}">${r.status}</div>
-  </div>`;
+  const rowHTML=(r,alive)=>{
+    const av = avatarMap[r.team];
+    return `<div class="status-row ${alive?'alive':'dead'}">
+      ${av
+        ? `<img src="${av}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${alive?'rgba(29,184,122,0.4)':'rgba(255,80,80,0.25)'}">`
+        : `<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);flex-shrink:0;border:2px solid rgba(255,255,255,0.08)"></div>`}
+      <div style="flex:1;min-width:0">
+        <div class="sr-team">${r.team}</div>
+        <div class="sr-person">▸ ${r.person}</div>
+      </div>
+      <div class="sr-status ${alive?'in':'out'}">${r.status}</div>
+    </div>`;
+  };
   document.getElementById('lb-inner').innerHTML=`<div class="lb-two-col">
     <div class="lb-col">
       <div class="lb-col-hd alive-hd"><span>✓ Still In</span><span class="lb-count">${inR.length} teams</span></div>

@@ -159,7 +159,7 @@
       <div style="overflow-x:auto">
         <table class="users-table">
           <thead><tr>
-            <th>Name</th><th>Email</th><th>Role</th><th>Draws</th><th>Their Teams</th><th>Paid</th>
+            <th>Photo</th><th>Name</th><th>Email</th><th>Role</th><th>Draws</th><th>Their Teams</th><th>Paid</th>
           </tr></thead>
           <tbody id="usersTableBody"></tbody>
         </table>
@@ -293,6 +293,15 @@ async function renderUsers() {
     const role  = u.is_super_admin ? '<span class="badge super">Super Admin</span>' : u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge user">User</span>';
     const canToggleAdmin = currentProfile.is_super_admin && u.id !== currentUser.id;
     return `<tr id="urow-${u.id}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${u.avatar_url
+            ? `<img id="avimg-${u.id}" src="${u.avatar_url}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.15);flex-shrink:0">`
+            : `<div id="avimg-${u.id}" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.07);border:2px dashed rgba(255,255,255,0.18);flex-shrink:0"></div>`}
+          <label for="av-${u.id}" title="Upload photo" style="cursor:pointer;font-size:16px;line-height:1;opacity:0.5;transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">📷</label>
+          <input type="file" id="av-${u.id}" accept="image/*" style="display:none" onchange="uploadAvatar('${u.id}',this)">
+        </div>
+      </td>
       <td><strong>${u.first_name} ${u.last_name}</strong></td>
       <td style="color:var(--muted);font-size:14px">${u.email}</td>
       <td>${role}${canToggleAdmin ? `<button class="btn-icon" onclick="toggleAdmin('${u.id}',${u.is_admin})" style="margin-left:6px">${u.is_admin?'Remove Admin':'Make Admin'}</button>` : ''}</td>
@@ -467,6 +476,41 @@ async function addParticipant() {
   document.getElementById('addDraws').value = '1';
   showToast(`${first} ${last} added ✓`, 'ok');
   renderUsers();
+}
+
+// ── Upload avatar ─────────────────────────────────────────────────────────────
+async function uploadAvatar(uid, input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  showToast('Uploading photo...', 'ok');
+  const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const path = `${uid}.${ext}`;
+
+  const { error: upErr } = await db.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (upErr) { showToast('Upload error: ' + upErr.message, 'err'); return; }
+
+  const { data: { publicUrl } } = db.storage.from('avatars').getPublicUrl(path);
+
+  const { error: dbErr } = await db.from('profiles')
+    .update({ avatar_url: publicUrl })
+    .eq('id', uid);
+
+  if (dbErr) { showToast('Save error: ' + dbErr.message, 'err'); return; }
+
+  // Swap placeholder → photo in-place without full re-render
+  const thumb = document.getElementById('avimg-' + uid);
+  if (thumb) {
+    const img = document.createElement('img');
+    img.id = 'avimg-' + uid;
+    img.src = publicUrl;
+    img.style.cssText = 'width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,0.15);flex-shrink:0';
+    thumb.replaceWith(img);
+  }
+  showToast('Photo saved ✓', 'ok');
 }
 
 // ── Toggle paid status ────────────────────────────────────────────────────────
