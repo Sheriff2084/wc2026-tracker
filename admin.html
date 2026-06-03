@@ -151,7 +151,7 @@
       <div style="overflow-x:auto">
         <table class="users-table">
           <thead><tr>
-            <th>Name</th><th>Email</th><th>Role</th><th>Draws</th><th>Their Teams</th><th></th>
+            <th>Name</th><th>Email</th><th>Role</th><th>Draws</th><th>Their Teams</th><th>Paid</th>
           </tr></thead>
           <tbody id="usersTableBody"></tbody>
         </table>
@@ -278,7 +278,8 @@ async function renderUsers() {
   const teamsByUser = {};
   (draws || []).forEach(d => { (teamsByUser[d.user_id] = teamsByUser[d.user_id] || []).push(d.team_name); });
 
-  document.getElementById('userCountLabel').textContent = users.length + ' registered';
+  const paidCount = users.filter(u => u.paid).length;
+  document.getElementById('userCountLabel').textContent = `${users.length} registered · ${paidCount} paid`;
   document.getElementById('usersTableBody').innerHTML = users.map(u => {
     const teams = (teamsByUser[u.id] || []).map(t => `<span class="team-chip">${t}</span>`).join('') || '<span style="color:var(--muted);font-size:13px">none yet</span>';
     const role  = u.is_super_admin ? '<span class="badge super">Super Admin</span>' : u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge user">User</span>';
@@ -294,7 +295,11 @@ async function renderUsers() {
         <span style="font-size:13px;color:var(--muted)">(${u.draws_used} used)</span>
       </div></td>
       <td>${teams}</td>
-      <td></td>
+      <td style="text-align:center">
+        <input type="checkbox" ${u.paid?'checked':''} title="${u.paid?'Paid':'Not paid'}"
+          style="width:18px;height:18px;accent-color:var(--green-light);cursor:pointer"
+          onchange="togglePaid('${u.id}',${u.paid},this)">
+      </td>
     </tr>`;
   }).join('');
 }
@@ -452,6 +457,23 @@ async function addParticipant() {
   renderUsers();
 }
 
+// ── Toggle paid status ────────────────────────────────────────────────────────
+async function togglePaid(uid, currentlyPaid, checkbox) {
+  const newVal = !currentlyPaid;
+  const { error } = await db.from('profiles').update({ paid: newVal }).eq('id', uid);
+  if (error) {
+    showToast('Error: ' + error.message, 'err');
+    checkbox.checked = currentlyPaid; // revert
+    return;
+  }
+  // Update the header count without re-rendering the full table
+  const allCheckboxes = document.querySelectorAll('#usersTableBody input[type="checkbox"]');
+  const paidCount = [...allCheckboxes].filter(cb => cb.checked).length;
+  const total = allCheckboxes.length;
+  document.getElementById('userCountLabel').textContent = `${total} registered · ${paidCount} paid`;
+  showToast(newVal ? 'Marked as paid ✓' : 'Marked as unpaid', 'ok');
+}
+
 // ── Reset all draws (keep users) ─────────────────────────────────────────────
 async function resetAllDraws() {
   const confirmed = window.confirm(
@@ -486,12 +508,13 @@ async function exportCSV() {
   const teamsByUser = {};
   draws.forEach(d => { (teamsByUser[d.user_id] = teamsByUser[d.user_id] || []).push(d.team_name); });
 
-  const rows = [['First Name','Last Name','Email','Role','Draws Allowed','Draws Used','Team 1','Team 2','Team 3','Team 4']];
+  const rows = [['First Name','Last Name','Email','Role','Paid','Draws Allowed','Draws Used','Team 1','Team 2','Team 3','Team 4','Team 5','Team 6','Team 7','Team 8','Team 9','Team 10']];
   users.forEach(u => {
     const teams = teamsByUser[u.id] || [];
     const role  = u.is_super_admin ? 'Super Admin' : u.is_admin ? 'Admin' : 'Participant';
-    rows.push([u.first_name, u.last_name, u.email, role, u.draws_allowed, u.draws_used,
-      teams[0]||'', teams[1]||'', teams[2]||'', teams[3]||'']);
+    rows.push([u.first_name, u.last_name, u.email, role, u.paid ? 'Yes' : 'No',
+      u.draws_allowed, u.draws_used,
+      ...Array.from({length:10}, (_,i) => teams[i]||'')]);
   });
 
   const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
