@@ -155,8 +155,8 @@
   .fx-card:hover{border-color:rgba(255,255,255,0.16)}
   .fx-card.played{border-color:rgba(255,255,255,0.1)}
   .fx-team{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
-  .fx-flag{font-size:40px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35))}
-  .fx-flag.tbd{opacity:0.15}
+  .fx-flag-img{width:52px;height:auto;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,0.45);display:block;margin:0 auto}
+  .fx-flag-blank{width:52px;height:35px;display:block;margin:0 auto;background:rgba(255,255,255,0.04);border-radius:3px;border:1px dashed rgba(255,255,255,0.1)}
   .fx-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.3px;line-height:1.2}
   .fx-name.win{color:var(--green-light)}
   .fx-name.tbd{color:var(--muted);font-style:italic;font-size:14px}
@@ -168,9 +168,10 @@
   .fx-sep{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--muted);padding:0 2px}
   .fx-vs{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:rgba(255,255,255,0.1)}
   .fx-status{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  .fx-datetime{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;color:var(--muted);margin-top:4px;white-space:nowrap}
   @media(max-width:560px){
     .fx-card{grid-template-columns:1fr 88px 1fr;padding:10px 10px;gap:6px}
-    .fx-flag{font-size:28px}.fx-name{font-size:14px}.fx-s{font-size:38px}
+    .fx-flag-img,.fx-flag-blank{width:38px}.fx-name{font-size:14px}.fx-s{font-size:38px}
     .res-pill{font-size:11px;padding:6px 11px}
   }
 </style>
@@ -403,19 +404,27 @@ function renderGroups() {
 }
 
 // ── Results tab ───────────────────────────────────────────────────────────────
-const FLAGS = {
-  'Mexico':'🇲🇽','South Korea':'🇰🇷','South Africa':'🇿🇦','Czechia':'🇨🇿',
-  'Canada':'🇨🇦','Switzerland':'🇨🇭','Qatar':'🇶🇦','Bosnia & Herz.':'🇧🇦',
-  'Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
-  'United States':'🇺🇸','Australia':'🇦🇺','Paraguay':'🇵🇾','Türkiye':'🇹🇷',
-  'Germany':'🇩🇪','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨','Curaçao':'🇨🇼',
-  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
-  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
-  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
-  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
-  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
-  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
-  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+// flagcdn.com — free flag image CDN, ISO 3166-1 alpha-2 codes
+// England & Scotland intentionally omitted (no sovereign nation code)
+const FLAG_CODES = {
+  'Mexico':'mx','South Korea':'kr','South Africa':'za','Czechia':'cz',
+  'Canada':'ca','Switzerland':'ch','Qatar':'qa','Bosnia & Herz.':'ba',
+  'Brazil':'br','Morocco':'ma','Scotland':null,'Haiti':'ht',
+  'United States':'us','Australia':'au','Paraguay':'py','Türkiye':'tr',
+  'Germany':'de','Ivory Coast':'ci','Ecuador':'ec','Curaçao':'cw',
+  'Netherlands':'nl','Japan':'jp','Sweden':'se','Tunisia':'tn',
+  'Belgium':'be','Egypt':'eg','Iran':'ir','New Zealand':'nz',
+  'Spain':'es','Cape Verde':'cv','Saudi Arabia':'sa','Uruguay':'uy',
+  'France':'fr','Senegal':'sn','Iraq':'iq','Norway':'no',
+  'Argentina':'ar','Algeria':'dz','Austria':'at','Jordan':'jo',
+  'Portugal':'pt','DR Congo':'cd','Uzbekistan':'uz','Colombia':'co',
+  'England':null,'Croatia':'hr','Ghana':'gh','Panama':'pa',
+};
+const flagImg = name => {
+  const code = FLAG_CODES[name];
+  return code
+    ? `<img src="https://flagcdn.com/w80/${code}.png" class="fx-flag-img" alt="${name}" loading="lazy">`
+    : `<div class="fx-flag-blank"></div>`;
 };
 const KO_RDS = [
   {id:'r32',   label:'Round of 32',    ids:['R32-1','R32-2','R32-3','R32-4','R32-5','R32-6','R32-7','R32-8','R32-9','R32-10','R32-11','R32-12','R32-13','R32-14','R32-15','R32-16']},
@@ -469,20 +478,23 @@ function fxCard(t1,t2,r) {
   r=r||{};
   const played=r.played||false, s1=r.score1??null, s2=r.score2??null;
   const t1w=played&&+s1>+s2, t2w=played&&+s2>+s1;
-  const tbd1=t1==='TBD',tbd2=t2==='TBD';
-  const team=(name,flag,owner,win,tbd)=>`<div class="fx-team">
-    <span class="fx-flag${tbd?' tbd':''}">${tbd?'🏳️':flag}</span>
+  const tbd1=t1==='TBD', tbd2=t2==='TBD';
+  const dt = [r.match_date, r.kick_off_aest ? r.kick_off_aest+' AEST' : ''].filter(Boolean).join(' · ');
+  const team=(name,owner,win,tbd)=>`<div class="fx-team">
+    ${tbd ? '<div class="fx-flag-blank"></div>' : flagImg(name)}
     <span class="fx-name${win?' win':''}${tbd?' tbd':''}">${name}</span>
     ${owner&&!tbd?`<span class="fx-owner">▸ ${owner}</span>`:''}
   </div>`;
   return `<div class="fx-card${played?' played':''}">
-    ${team(t1,FLAGS[t1]||'🏳️',ownerMap[t1]||'',t1w,tbd1)}
+    ${team(t1,ownerMap[t1]||'',t1w,tbd1)}
     <div class="fx-mid">
       ${played
-        ?`<div class="fx-scores"><span class="fx-s${t1w?' win':''}">${s1}</span><span class="fx-sep">–</span><span class="fx-s${t2w?' win':''}">${s2}</span></div><div class="fx-status">Full Time</div>`
-        :`<div class="fx-vs">VS</div><div class="fx-status">Upcoming</div>`}
+        ?`<div class="fx-scores"><span class="fx-s${t1w?' win':''}">${s1}</span><span class="fx-sep">–</span><span class="fx-s${t2w?' win':''}">${s2}</span></div>`
+        :`<div class="fx-vs">VS</div>`}
+      ${dt?`<div class="fx-datetime">${dt}</div>`:''}
+      <div class="fx-status">${played?'Full Time':'Upcoming'}</div>
     </div>
-    ${team(t2,FLAGS[t2]||'🏳️',ownerMap[t2]||'',t2w,tbd2)}
+    ${team(t2,ownerMap[t2]||'',t2w,tbd2)}
   </div>`;
 }
 

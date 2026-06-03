@@ -160,7 +160,10 @@
 
   <!-- Group Results -->
   <div class="section">
-    <div class="section-hd"><span class="section-title">Group Stage Results</span></div>
+    <div class="section-hd">
+      <span class="section-title">Group Stage Results</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);letter-spacing:1px">Date &amp; time in AEST (UTC+10)</span>
+    </div>
     <div class="section-body">
       <div class="group-tabs" id="groupTabs"></div>
       <div id="groupMatchForms"></div>
@@ -340,16 +343,19 @@ function renderGroupForms(g) {
     <div>${ms.map(m => {
       const r = groupResultsData[m.id] || {};
       const o1 = ownerMap[m.t1]?.name, o2 = ownerMap[m.t2]?.name;
-      return `<div class="match-form-row">
-        <div style="flex:1;min-width:0">
+      const dtStyle = `background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:7px 9px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;outline:none`;
+      return `<div class="match-form-row" style="flex-wrap:wrap;gap:8px">
+        <div style="flex:1;min-width:120px">
           <div class="mf-team">${m.t1}</div>${o1?`<div class="mf-owner">▸ ${o1}</div>`:''}
         </div>
         <input type="number" class="score-input" id="s1-${m.id}" value="${r.score1??''}" min="0" max="99" placeholder="–">
         <span class="mf-dash">–</span>
         <input type="number" class="score-input" id="s2-${m.id}" value="${r.score2??''}" min="0" max="99" placeholder="–">
-        <div style="flex:1;min-width:0;text-align:right">
+        <div style="flex:1;min-width:120px;text-align:right">
           <div class="mf-team right">${m.t2}</div>${o2?`<div class="mf-owner">${o2} ▸</div>`:''}
         </div>
+        <input type="text" style="${dtStyle};width:80px" id="dt-${m.id}" placeholder="12 Jun" value="${r.match_date||''}" title="Match date">
+        <input type="text" style="${dtStyle};width:90px" id="tm-${m.id}" placeholder="8:00am" value="${r.kick_off_aest||''}" title="Kick-off time (AEST)">
         <input type="checkbox" class="played-cb" id="p-${m.id}" title="Mark as played" ${r.played?'checked':''}>
       </div>`;
     }).join('')}</div>
@@ -362,7 +368,9 @@ async function saveGroupResults(g) {
     const s1  = document.getElementById('s1-' + m.id).value;
     const s2  = document.getElementById('s2-' + m.id).value;
     const played = document.getElementById('p-' + m.id).checked;
-    return { match_id: m.id, team1: m.t1, score1: s1 !== '' ? +s1 : null, team2: m.t2, score2: s2 !== '' ? +s2 : null, played };
+    const dt = document.getElementById('dt-' + m.id).value.trim();
+    const tm = document.getElementById('tm-' + m.id).value.trim();
+    return { match_id: m.id, team1: m.t1, score1: s1 !== '' ? +s1 : null, team2: m.t2, score2: s2 !== '' ? +s2 : null, played, match_date: dt||null, kick_off_aest: tm||null };
   });
 
   const btn = document.querySelector('.save-btn');
@@ -382,12 +390,16 @@ function renderKoForms() {
       <div class="ko-round-label">${round.label}</div>
       ${round.ids.map(id => {
         const r = koResultsData[id] || {};
-        return `<div class="match-form-row">
-          <input type="text" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none" id="kow-${id}" placeholder="Winner (team name)" value="${r.winner||''}">
+        const koIn = `background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none`;
+        const dtIn = `background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:7px 9px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:13px;outline:none`;
+        return `<div class="match-form-row" style="flex-wrap:wrap;gap:8px">
+          <input type="text" style="${koIn};flex:1;min-width:130px" id="kow-${id}" placeholder="Winner" value="${r.winner||''}">
           <input type="number" class="score-input" id="kos1-${id}" placeholder="–" value="${r.score1??''}">
           <span class="mf-dash">–</span>
           <input type="number" class="score-input" id="kos2-${id}" placeholder="–" value="${r.score2??''}">
-          <input type="text" style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none" id="kol-${id}" placeholder="Loser (team name)" value="${r.loser||''}">
+          <input type="text" style="${koIn};flex:1;min-width:130px" id="kol-${id}" placeholder="Loser" value="${r.loser||''}">
+          <input type="text" style="${dtIn};width:80px" id="kodt-${id}" placeholder="14 Jul" value="${r.match_date||''}" title="Match date">
+          <input type="text" style="${dtIn};width:90px" id="kotm-${id}" placeholder="11:00am" value="${r.kick_off_aest||''}" title="Kick-off (AEST)">
           <input type="checkbox" class="played-cb" id="kop-${id}" title="Played" ${r.played?'checked':''}>
           <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);letter-spacing:1px;white-space:nowrap">${id}</span>
         </div>`;
@@ -398,12 +410,14 @@ function renderKoForms() {
 
 async function saveKoRound(label, ids) {
   const rows = ids.map(id => ({
-    match_id: id,
-    winner: document.getElementById('kow-'+id).value.trim() || null,
-    loser:  document.getElementById('kol-'+id).value.trim() || null,
-    score1: document.getElementById('kos1-'+id).value !== '' ? +document.getElementById('kos1-'+id).value : null,
-    score2: document.getElementById('kos2-'+id).value !== '' ? +document.getElementById('kos2-'+id).value : null,
-    played: document.getElementById('kop-'+id).checked,
+    match_id:      id,
+    winner:        document.getElementById('kow-'+id).value.trim() || null,
+    loser:         document.getElementById('kol-'+id).value.trim() || null,
+    score1:        document.getElementById('kos1-'+id).value !== '' ? +document.getElementById('kos1-'+id).value : null,
+    score2:        document.getElementById('kos2-'+id).value !== '' ? +document.getElementById('kos2-'+id).value : null,
+    played:        document.getElementById('kop-'+id).checked,
+    match_date:    document.getElementById('kodt-'+id).value.trim() || null,
+    kick_off_aest: document.getElementById('kotm-'+id).value.trim() || null,
   }));
 
   const { error } = await db.from('knockout_results').upsert(rows, { onConflict: 'match_id' });
