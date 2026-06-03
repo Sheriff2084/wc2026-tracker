@@ -84,6 +84,8 @@
   .ko-section{margin-bottom:22px}
   .ko-round-label{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06)}
 
+  @media(max-width:768px){.qr-panel{display:none!important}}
+
   /* Toast */
   .toast{position:fixed;bottom:20px;right:18px;padding:11px 18px;border-radius:9px;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:0.5px;transform:translateY(60px);opacity:0;transition:all 0.3s;z-index:300}
   .toast.show{transform:translateY(0);opacity:1}
@@ -96,7 +98,7 @@
 
 <div class="hdr">
   <div style="display:flex;align-items:center;gap:10px">
-    <div style="background:rgba(10,15,20,0.7);border:1px solid rgba(245,197,24,0.25);border-radius:7px;padding:6px;text-align:center;flex-shrink:0">
+    <div class="qr-panel" style="background:rgba(10,15,20,0.7);border:1px solid rgba(245,197,24,0.25);border-radius:7px;padding:6px;text-align:center;flex-shrink:0">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https%3A%2F%2Fwc2026-tracker-eight.vercel.app%2Findex.html&margin=3" style="display:block;width:72px;height:72px;border-radius:2px" alt="QR Code">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,197,24,0.6);margin-top:4px">Scan to Join</div>
     </div>

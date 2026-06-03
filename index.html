@@ -28,7 +28,7 @@
   .trophy-ico{font-size:44px;display:block;margin-bottom:4px;filter:drop-shadow(0 0 16px rgba(245,197,24,0.5));animation:glow 3s ease-in-out infinite}
   @keyframes glow{0%,100%{filter:drop-shadow(0 0 10px rgba(245,197,24,0.4))}50%{filter:drop-shadow(0 0 26px rgba(245,197,24,0.8))}}
   .hdr h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,62px);letter-spacing:4px;color:var(--gold);line-height:0.9}
-  .hdr h1 span{display:block;font-size:0.44em;letter-spacing:10px;color:var(--white);opacity:0.7}
+  .hdr h1 span{display:block;font-size:0.62em;letter-spacing:10px;color:#63d4f5;opacity:1}
   .hdr-sub{margin-top:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green-light)}
   .last-updated{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:4px}
 
@@ -138,6 +138,7 @@
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
   @media(max-width:700px){.group-grid{grid-template-columns:1fr}.lb-two-col{grid-template-columns:1fr}}
+  @media(max-width:768px){.qr-panel{display:none!important}}
 
   /* ── FIFA-style results ─────────────────────────────────────────────────── */
   .res-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.07)}
@@ -180,7 +181,7 @@
 
 <div class="hdr">
   <div class="hdr-nav" id="hdrNav"></div>
-  <div style="position:absolute;top:12px;left:14px;background:rgba(10,15,20,0.7);border:1px solid rgba(245,197,24,0.25);border-radius:8px;padding:7px;text-align:center">
+  <div class="qr-panel" style="position:absolute;top:12px;left:14px;background:rgba(10,15,20,0.7);border:1px solid rgba(245,197,24,0.25);border-radius:8px;padding:7px;text-align:center">
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=https%3A%2F%2Fwc2026-tracker-eight.vercel.app%2Findex.html&margin=4" style="display:block;width:90px;height:90px;border-radius:3px" alt="QR Code">
     <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(245,197,24,0.6);margin-top:5px">Scan to Join</div>
   </div>
