@@ -408,7 +408,7 @@ function renderGroups() {
 const FLAG_CODES = {
   'Mexico':'mx','South Korea':'kr','South Africa':'za','Czechia':'cz',
   'Canada':'ca','Switzerland':'ch','Qatar':'qa','Bosnia & Herz.':'ba',
-  'Brazil':'br','Morocco':'ma','Scotland':'gb-sct','Haiti':'ht',
+  'Brazil':'br','Morocco':'ma','Scotland':'https://upload.wikimedia.org/wikipedia/commons/1/10/Flag_of_Scotland.svg','Haiti':'ht',
   'United States':'us','Australia':'au','Paraguay':'py','Türkiye':'tr',
   'Germany':'de','Ivory Coast':'ci','Ecuador':'ec','Curaçao':'cw',
   'Netherlands':'nl','Japan':'jp','Sweden':'se','Tunisia':'tn',
@@ -417,13 +417,13 @@ const FLAG_CODES = {
   'France':'fr','Senegal':'sn','Iraq':'iq','Norway':'no',
   'Argentina':'ar','Algeria':'dz','Austria':'at','Jordan':'jo',
   'Portugal':'pt','DR Congo':'cd','Uzbekistan':'uz','Colombia':'co',
-  'England':'gb-eng','Croatia':'hr','Ghana':'gh','Panama':'pa',
+  'England':'https://upload.wikimedia.org/wikipedia/en/b/be/Flag_of_England.svg','Croatia':'hr','Ghana':'gh','Panama':'pa',
 };
 const flagImg = name => {
-  const code = FLAG_CODES[name];
-  return code
-    ? `<img src="https://flagcdn.com/w80/${code}.png" class="fx-flag-img" alt="${name}" loading="lazy">`
-    : `<div class="fx-flag-blank"></div>`;
+  const val = FLAG_CODES[name];
+  if (!val) return `<div class="fx-flag-blank"></div>`;
+  const src = val.startsWith('http') ? val : `https://flagcdn.com/w80/${val}.png`;
+  return `<img src="${src}" class="fx-flag-img" alt="${name}" loading="lazy">`;
 };
 const KO_RDS = [
   {id:'r32',   label:'Round of 32',    ids:['R32-1','R32-2','R32-3','R32-4','R32-5','R32-6','R32-7','R32-8','R32-9','R32-10','R32-11','R32-12','R32-13','R32-14','R32-15','R32-16']},
