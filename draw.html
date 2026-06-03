@@ -86,6 +86,9 @@
 
   @media(max-width:600px){.modal{padding:28px 20px}.modal-team{font-size:38px}}
   @media(max-width:768px){.qr-panel{display:none!important}}
+  .wheel-legend{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin-top:14px;padding:10px 16px;background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:10px}
+  .wl-item{display:flex;align-items:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--muted)}
+  .wl-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -141,6 +144,12 @@
         <canvas id="wheelCanvas" width="520" height="520"></canvas>
       </div>
       <button class="spin-btn" id="spinBtn" onclick="doSpin()">SPIN</button>
+      <div class="wheel-legend">
+        <div class="wl-item"><span class="wl-dot" style="background:rgba(245,197,24,0.9)"></span>Favourite</div>
+        <div class="wl-item"><span class="wl-dot" style="background:rgba(180,180,180,0.85)"></span>Contender</div>
+        <div class="wl-item"><span class="wl-dot" style="background:rgba(180,100,50,0.85)"></span>Dark Horse</div>
+        <div class="wl-item"><span class="wl-dot" style="background:rgba(70,95,120,0.8)"></span>Outsider</div>
+      </div>
     </div>
   </div>
 </div>
@@ -303,7 +312,7 @@ class Wheel {
 
       // Text
       const maxChars = n > 35 ? 7 : n > 20 ? 10 : 18;
-      const fontSize = n > 35 ? 10 : n > 20 ? 12 : 14;
+      const fontSize = n > 35 ? 12 : n > 20 ? 14 : 16;
       const label    = team.name.length > maxChars ? team.name.slice(0, maxChars - 1) + '…' : team.name;
 
       ctx.save();
