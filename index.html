@@ -138,6 +138,41 @@
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
   @media(max-width:700px){.group-grid{grid-template-columns:1fr}.lb-two-col{grid-template-columns:1fr}}
+
+  /* ── FIFA-style results ─────────────────────────────────────────────────── */
+  .res-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.07)}
+  .res-pill{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--muted);padding:8px 18px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+  .res-pill:hover{color:var(--white);border-color:rgba(255,255,255,0.3)}
+  .res-pill.on{background:var(--gold);border-color:var(--gold);color:#000}
+  .res-sub{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+  .res-stab{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.1);background:transparent;color:var(--muted);padding:6px 13px;border-radius:6px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+  .res-stab:hover{color:var(--white)}.res-stab.on{background:var(--green);border-color:var(--green-mid);color:#fff}
+  .res-block{margin-bottom:30px}
+  .res-block-hd{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:baseline;gap:10px}
+  .res-block-sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);letter-spacing:0;font-weight:400}
+
+  .fx-card{display:grid;grid-template-columns:1fr 108px 1fr;align-items:center;gap:10px;background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:14px 18px;margin-bottom:8px;transition:border-color 0.2s}
+  .fx-card:hover{border-color:rgba(255,255,255,0.16)}
+  .fx-card.played{border-color:rgba(255,255,255,0.1)}
+  .fx-team{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+  .fx-flag{font-size:40px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35))}
+  .fx-flag.tbd{opacity:0.15}
+  .fx-name{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.3px;line-height:1.2}
+  .fx-name.win{color:var(--green-light)}
+  .fx-name.tbd{color:var(--muted);font-style:italic;font-size:14px}
+  .fx-owner{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--gold)}
+  .fx-mid{text-align:center}
+  .fx-scores{display:flex;align-items:center;justify-content:center;gap:3px}
+  .fx-s{font-family:'Bebas Neue',sans-serif;font-size:50px;color:var(--white);line-height:1;min-width:32px;text-align:center}
+  .fx-s.win{color:var(--green-light)}
+  .fx-sep{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--muted);padding:0 2px}
+  .fx-vs{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:rgba(255,255,255,0.1)}
+  .fx-status{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+  @media(max-width:560px){
+    .fx-card{grid-template-columns:1fr 88px 1fr;padding:10px 10px;gap:6px}
+    .fx-flag{font-size:28px}.fx-name{font-size:14px}.fx-s{font-size:38px}
+    .res-pill{font-size:11px;padding:6px 11px}
+  }
 </style>
 </head>
 <body>
@@ -368,34 +403,87 @@ function renderGroups() {
 }
 
 // ── Results tab ───────────────────────────────────────────────────────────────
+const FLAGS = {
+  'Mexico':'🇲🇽','South Korea':'🇰🇷','South Africa':'🇿🇦','Czechia':'🇨🇿',
+  'Canada':'🇨🇦','Switzerland':'🇨🇭','Qatar':'🇶🇦','Bosnia & Herz.':'🇧🇦',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Haiti':'🇭🇹',
+  'United States':'🇺🇸','Australia':'🇦🇺','Paraguay':'🇵🇾','Türkiye':'🇹🇷',
+  'Germany':'🇩🇪','Ivory Coast':'🇨🇮','Ecuador':'🇪🇨','Curaçao':'🇨🇼',
+  'Netherlands':'🇳🇱','Japan':'🇯🇵','Sweden':'🇸🇪','Tunisia':'🇹🇳',
+  'Belgium':'🇧🇪','Egypt':'🇪🇬','Iran':'🇮🇷','New Zealand':'🇳🇿',
+  'Spain':'🇪🇸','Cape Verde':'🇨🇻','Saudi Arabia':'🇸🇦','Uruguay':'🇺🇾',
+  'France':'🇫🇷','Senegal':'🇸🇳','Iraq':'🇮🇶','Norway':'🇳🇴',
+  'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
+  'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+};
+const KO_RDS = [
+  {id:'r32',   label:'Round of 32',    ids:['R32-1','R32-2','R32-3','R32-4','R32-5','R32-6','R32-7','R32-8','R32-9','R32-10','R32-11','R32-12','R32-13','R32-14','R32-15','R32-16']},
+  {id:'r16',   label:'Round of 16',    ids:['R16-1','R16-2','R16-3','R16-4','R16-5','R16-6','R16-7','R16-8']},
+  {id:'qf',    label:'Quarter-Finals', ids:['QF-1','QF-2','QF-3','QF-4']},
+  {id:'sf',    label:'Semi-Finals',    ids:['SF-1','SF-2']},
+  {id:'final', label:'Final',          ids:['FINAL']},
+];
+
+let activeRound='group', activeGrp='all';
+
 function renderResults() {
-  let html = '';
-  Object.entries(GROUP_INFO).forEach(([g,info])=>{
-    const ms = groupMatches(g);
-    const p  = ms.filter(m=>results[m.id]&&results[m.id].played).length;
-    html += `<div class="match-group-block">
-      <div class="match-group-hd"><span class="mgh-label">Group ${g}</span><span class="mgh-sub">${p}/6 played · ${info.dates}</span></div>
-      <div class="match-group-body">`;
-    ms.forEach(m=>{
-      const r=results[m.id]||{score1:null,score2:null,played:false};
-      const t1w=r.played&&+r.score1>+r.score2, t2w=r.played&&+r.score2>+r.score1;
-      html += `<div class="match-row${r.played?' played':''}">
-        <div class="mt right"><div style="text-align:right">
-          <div class="mn">${m.t1}</div>${ownerMap[m.t1]?`<div class="mo">${ownerMap[m.t1]}</div>`:''}
-        </div></div>
-        <div class="score-display">
-          ${r.played
-            ? `<span class="score-val${t1w?' winner':''}">${r.score1}</span><span class="score-dash">–</span><span class="score-val${t2w?' winner':''}">${r.score2}</span>`
-            : `<span class="score-tbd">vs</span>`}
-        </div>
-        <div class="mt"><div>
-          <div class="mn">${m.t2}</div>${ownerMap[m.t2]?`<div class="mo">${ownerMap[m.t2]}</div>`:''}
-        </div></div>
+  const pills = [{id:'group',label:'Group Stage'},...KO_RDS].map(r=>
+    `<button class="res-pill${activeRound===r.id?' on':''}" onclick="setRound('${r.id}')">${r.label}</button>`
+  ).join('');
+
+  const sub = activeRound==='group' ? `<div class="res-sub">
+    <button class="res-stab${activeGrp==='all'?' on':''}" onclick="setGrp('all')">All Groups</button>
+    ${Object.keys(GROUP_INFO).map(g=>`<button class="res-stab${activeGrp===g?' on':''}" onclick="setGrp('${g}')">Group ${g}</button>`).join('')}
+  </div>` : '';
+
+  let body = '';
+  if (activeRound==='group') {
+    (activeGrp==='all' ? Object.keys(GROUP_INFO) : [activeGrp]).forEach(g => {
+      const ms=groupMatches(g), p=ms.filter(m=>results[m.id]?.played).length;
+      body += `<div class="res-block">
+        <div class="res-block-hd">Group ${g}<span class="res-block-sub">${p}/6 played · ${GROUP_INFO[g].dates}</span></div>
+        ${ms.map(m=>fxCard(m.t1,m.t2,results[m.id])).join('')}
       </div>`;
     });
-    html += `</div></div>`;
-  });
-  document.getElementById('results-inner').innerHTML = html;
+  } else {
+    const rd = KO_RDS.find(r=>r.id===activeRound);
+    body = `<div class="res-block">${rd.ids.map(id=>{
+      const ko=knockoutMap[id];
+      if (ko?.played) return fxCard(ko.winner,ko.loser,{score1:ko.score1,score2:ko.score2,played:true});
+      const def=R32_MATCHES.find(m=>m[0]===id);
+      const t1=def?(resolveSlot(def[2][0],def[2][1])||'TBD'):'TBD';
+      const t2=def?(resolveSlot(def[3][0],def[3][1])||'TBD'):'TBD';
+      return fxCard(t1,t2,null);
+    }).join('')}</div>`;
+  }
+
+  document.getElementById('results-inner').innerHTML =
+    `<div class="res-pills">${pills}</div>${sub}<div>${body}</div>`;
+}
+
+function setRound(r){activeRound=r;renderResults();}
+function setGrp(g){activeGrp=g;renderResults();}
+
+function fxCard(t1,t2,r) {
+  r=r||{};
+  const played=r.played||false, s1=r.score1??null, s2=r.score2??null;
+  const t1w=played&&+s1>+s2, t2w=played&&+s2>+s1;
+  const tbd1=t1==='TBD',tbd2=t2==='TBD';
+  const team=(name,flag,owner,win,tbd)=>`<div class="fx-team">
+    <span class="fx-flag${tbd?' tbd':''}">${tbd?'🏳️':flag}</span>
+    <span class="fx-name${win?' win':''}${tbd?' tbd':''}">${name}</span>
+    ${owner&&!tbd?`<span class="fx-owner">▸ ${owner}</span>`:''}
+  </div>`;
+  return `<div class="fx-card${played?' played':''}">
+    ${team(t1,FLAGS[t1]||'🏳️',ownerMap[t1]||'',t1w,tbd1)}
+    <div class="fx-mid">
+      ${played
+        ?`<div class="fx-scores"><span class="fx-s${t1w?' win':''}">${s1}</span><span class="fx-sep">–</span><span class="fx-s${t2w?' win':''}">${s2}</span></div><div class="fx-status">Full Time</div>`
+        :`<div class="fx-vs">VS</div><div class="fx-status">Upcoming</div>`}
+    </div>
+    ${team(t2,FLAGS[t2]||'🏳️',ownerMap[t2]||'',t2w,tbd2)}
+  </div>`;
 }
 
 // ── Bracket tab ───────────────────────────────────────────────────────────────
