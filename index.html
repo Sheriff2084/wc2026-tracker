@@ -405,11 +405,10 @@ function renderGroups() {
 
 // ── Results tab ───────────────────────────────────────────────────────────────
 // flagcdn.com — free flag image CDN, ISO 3166-1 alpha-2 codes
-// England & Scotland intentionally omitted (no sovereign nation code)
 const FLAG_CODES = {
   'Mexico':'mx','South Korea':'kr','South Africa':'za','Czechia':'cz',
   'Canada':'ca','Switzerland':'ch','Qatar':'qa','Bosnia & Herz.':'ba',
-  'Brazil':'br','Morocco':'ma','Scotland':null,'Haiti':'ht',
+  'Brazil':'br','Morocco':'ma','Scotland':'gb-sct','Haiti':'ht',
   'United States':'us','Australia':'au','Paraguay':'py','Türkiye':'tr',
   'Germany':'de','Ivory Coast':'ci','Ecuador':'ec','Curaçao':'cw',
   'Netherlands':'nl','Japan':'jp','Sweden':'se','Tunisia':'tn',
@@ -418,7 +417,7 @@ const FLAG_CODES = {
   'France':'fr','Senegal':'sn','Iraq':'iq','Norway':'no',
   'Argentina':'ar','Algeria':'dz','Austria':'at','Jordan':'jo',
   'Portugal':'pt','DR Congo':'cd','Uzbekistan':'uz','Colombia':'co',
-  'England':null,'Croatia':'hr','Ghana':'gh','Panama':'pa',
+  'England':'gb-eng','Croatia':'hr','Ghana':'gh','Panama':'pa',
 };
 const flagImg = name => {
   const code = FLAG_CODES[name];
