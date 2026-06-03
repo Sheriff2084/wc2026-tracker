@@ -131,6 +131,7 @@
       <div style="display:flex;align-items:center;gap:14px">
         <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)" id="userCountLabel"></span>
         <button onclick="exportCSV()" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">⬇ Export CSV</button>
+        <button onclick="resetAllDraws()" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:7px;border:1px solid rgba(255,80,80,0.3);background:transparent;color:#ff9090;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(255,80,80,0.7)';this.style.color='#ffb0b0'" onmouseout="this.style.borderColor='rgba(255,80,80,0.3)';this.style.color='#ff9090'">↺ Reset Teams</button>
       </div>
     </div>
     <div class="section-body" style="padding:0">
@@ -448,6 +449,27 @@ async function addParticipant() {
   document.getElementById('addEmail').value = '';
   document.getElementById('addDraws').value = '1';
   showToast(`${first} ${last} added ✓`, 'ok');
+  renderUsers();
+}
+
+// ── Reset all draws (keep users) ─────────────────────────────────────────────
+async function resetAllDraws() {
+  const confirmed = window.confirm(
+    'Reset all team draws?\n\nThis will:\n• Remove every drawn team\n• Reset everyone\'s draw count to 0\n• Leave all participants untouched\n\nThis cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  const [delErr, updErr] = await Promise.all([
+    db.from('draws').delete().neq('id', '00000000-0000-0000-0000-000000000000').then(r => r.error),
+    db.from('profiles').update({ draws_used: 0 }).neq('id', '00000000-0000-0000-0000-000000000000').then(r => r.error),
+  ]);
+
+  if (delErr || updErr) {
+    showToast('Error: ' + (delErr || updErr).message, 'err');
+    return;
+  }
+
+  showToast('All teams reset ✓ — draws_used set to 0 for everyone', 'ok');
   renderUsers();
 }
 
