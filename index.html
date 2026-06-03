@@ -247,10 +247,11 @@ const R32_MATCHES = [
 ];
 
 // ── Live data (from Supabase) ────────────────────────────────────────────────
-let ownerMap      = {};
-let results       = {};
-let knockoutMap   = {};
-let groupStandings= {};
+let ownerMap          = {};
+let results           = {};
+let knockoutMap       = {};
+let groupStandings    = {};
+let totalParticipants = 0;
 
 function groupMatches(g) {
   const t = GROUP_INFO[g].teams;
@@ -295,11 +296,13 @@ function computeStandings() {
 })();
 
 async function loadData() {
-  const [drawsRes, groupRes, knockoutRes] = await Promise.all([
+  const [drawsRes, groupRes, knockoutRes, profilesRes] = await Promise.all([
     db.from('draws').select('team_name, profiles(first_name, last_name)'),
     db.from('group_results').select('*'),
     db.from('knockout_results').select('*'),
+    db.from('profiles').select('id', { count: 'exact', head: true }),
   ]);
+  totalParticipants = profilesRes.count || 0;
 
   ownerMap = {};
   (drawsRes.data || []).forEach(d => {
@@ -362,14 +365,19 @@ function signOut() { clearSession(); window.location.reload(); }
 
 // ── Groups tab ────────────────────────────────────────────────────────────────
 function renderGroups() {
-  const played  = Object.values(results).filter(r=>r.played).length;
-  const total   = Object.keys(GROUP_INFO).length * 6;
-  const ppl     = [...new Set(Object.values(ownerMap))].length;
-  const drawn   = Object.keys(ownerMap).length;
+  const played = Object.values(results).filter(r=>r.played).length;
+  const total  = Object.keys(GROUP_INFO).length * 6;
+  const drawn  = Object.keys(ownerMap).length;
   const TC = {1:'t1',2:'t2',3:'t3',4:'t4'};
+  const grpFlag = name => {
+    const val = FLAG_CODES[name];
+    if (!val) return `<div style="width:28px;flex-shrink:0"></div>`;
+    const src = val.startsWith('http') ? val : `https://flagcdn.com/w40/${val}.png`;
+    return `<img src="${src}" style="width:28px;height:auto;border-radius:2px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.35)" alt="${name}" loading="lazy">`;
+  };
   document.getElementById('groups-inner').innerHTML = `
     <div class="status-bar">
-      <div class="stat"><div class="stat-n">${ppl}</div><div class="stat-l">Participants</div></div>
+      <div class="stat"><div class="stat-n">${totalParticipants}</div><div class="stat-l">Participants</div></div>
       <div class="stat-div"></div>
       <div class="stat"><div class="stat-n">${drawn}</div><div class="stat-l">Teams Drawn</div></div>
       <div class="stat-div"></div>
@@ -389,12 +397,13 @@ function renderGroups() {
         <div class="group-hd"><span class="group-lbl">Group ${g}</span><span class="group-date">${GROUP_INFO[g].dates}</span></div>
         <div class="group-teams">${st.map((s,i)=>{
           const m=TM[s.team]||{t:4};const own=ownerMap[s.team];
-          return `<div class="team-row ${TC[m.t]}">
+          return `<div class="team-row ${TC[m.t]}" style="gap:10px">
+            ${grpFlag(s.team)}
             <div class="team-info">
               <div class="team-name">${s.team}</div>
               ${own?`<div class="team-owner">▸ ${own}</div>`:''}
             </div>
-            <div style="text-align:right;padding-left:12px">
+            <div style="text-align:right;padding-left:4px">
               <div class="team-pts">${s.pts}</div>
               <div class="team-gd-lbl">${(s.gd>=0?'+':'')+s.gd} GD</div>
             </div>
