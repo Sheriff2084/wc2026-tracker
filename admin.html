@@ -128,9 +128,25 @@
   <div class="section">
     <div class="section-hd">
       <span class="section-title">Participants</span>
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)" id="userCountLabel"></span>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)" id="userCountLabel"></span>
+        <button onclick="exportCSV()" style="font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color=''">⬇ Export CSV</button>
+      </div>
     </div>
     <div class="section-body" style="padding:0">
+      <!-- Add participant form -->
+      <div style="padding:16px 22px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Add Participant</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <input id="addFirst" type="text" placeholder="First Name" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:9px 13px;color:#fff;font-family:'Barlow',sans-serif;font-size:14px;outline:none;width:140px" onfocus="this.style.borderColor='#f5c518'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+          <input id="addLast"  type="text" placeholder="Last Name"  style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:9px 13px;color:#fff;font-family:'Barlow',sans-serif;font-size:14px;outline:none;width:140px" onfocus="this.style.borderColor='#f5c518'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+          <input id="addEmail" type="email" placeholder="email@allegrofunds.com.au" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:9px 13px;color:#fff;font-family:'Barlow',sans-serif;font-size:14px;outline:none;width:240px" onfocus="this.style.borderColor='#f5c518'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'">
+          <select id="addDraws" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:9px 13px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:14px;outline:none;cursor:pointer">
+            <option value="1">1 draw</option><option value="2">2 draws</option><option value="3">3 draws</option><option value="4">4 draws</option>
+          </select>
+          <button onclick="addParticipant()" style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;background:#f5c518;color:#000;border:none;border-radius:8px;padding:9px 22px;cursor:pointer">+ ADD</button>
+        </div>
+      </div>
       <div style="overflow-x:auto">
         <table class="users-table">
           <thead><tr>
@@ -393,6 +409,63 @@ async function saveKoRound(label, ids) {
   const { error } = await db.from('knockout_results').upsert(rows, { onConflict: 'match_id' });
   if (error) { showToast('Error: ' + error.message, 'err'); }
   else { rows.forEach(r => { koResultsData[r.match_id] = r; }); showToast(label + ' saved ✓', 'ok'); }
+}
+
+// ── Add participant ───────────────────────────────────────────────────────────
+async function addParticipant() {
+  const first = document.getElementById('addFirst').value.trim();
+  const last  = document.getElementById('addLast').value.trim();
+  const email = document.getElementById('addEmail').value.trim().toLowerCase();
+  const draws = parseInt(document.getElementById('addDraws').value);
+
+  if (!first || !last) { showToast('Please enter first and last name', 'err'); return; }
+  if (!email || !email.includes('@')) { showToast('Please enter a valid email', 'err'); return; }
+
+  const { error } = await db.from('profiles')
+    .insert({ first_name: first, last_name: last, email, draws_allowed: draws });
+
+  if (error) {
+    showToast(error.code === '23505' ? 'Email already registered' : 'Error: ' + error.message, 'err');
+    return;
+  }
+
+  document.getElementById('addFirst').value = '';
+  document.getElementById('addLast').value  = '';
+  document.getElementById('addEmail').value = '';
+  document.getElementById('addDraws').value = '1';
+  showToast(`${first} ${last} added ✓`, 'ok');
+  renderUsers();
+}
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+async function exportCSV() {
+  const [usersRes, drawsRes] = await Promise.all([
+    db.from('profiles').select('*').order('last_name').order('first_name'),
+    db.from('draws').select('team_name, user_id, wc_teams(tier)'),
+  ]);
+
+  const users = usersRes.data || [];
+  const draws = drawsRes.data || [];
+
+  const teamsByUser = {};
+  draws.forEach(d => { (teamsByUser[d.user_id] = teamsByUser[d.user_id] || []).push(d.team_name); });
+
+  const rows = [['First Name','Last Name','Email','Role','Draws Allowed','Draws Used','Team 1','Team 2','Team 3','Team 4']];
+  users.forEach(u => {
+    const teams = teamsByUser[u.id] || [];
+    const role  = u.is_super_admin ? 'Super Admin' : u.is_admin ? 'Admin' : 'Participant';
+    rows.push([u.first_name, u.last_name, u.email, role, u.draws_allowed, u.draws_used,
+      teams[0]||'', teams[1]||'', teams[2]||'', teams[3]||'']);
+  });
+
+  const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'wc2026-participants.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('CSV downloaded ✓', 'ok');
 }
 
 // ── Utils ────────────────────────────────────────────────────────────────────

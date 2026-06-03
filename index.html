@@ -355,7 +355,7 @@ function renderGroups() {
           const m=TM[s.team]||{t:4};const own=ownerMap[s.team];
           return `<div class="team-row ${TC[m.t]}">
             <div class="team-info">
-              <div class="team-name">${s.team}${i<2?'<span style="color:var(--green-light);font-size:12px"> ✓</span>':''}</div>
+              <div class="team-name">${s.team}</div>
               ${own?`<div class="team-owner">▸ ${own}</div>`:''}
             </div>
             <div style="text-align:right;padding-left:12px">

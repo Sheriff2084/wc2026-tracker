@@ -106,6 +106,9 @@
   <div class="banner done" id="bannerDone">
     ✓ You've completed your draw! Head to the <a href="index.html" style="color:inherit;font-weight:bold">live tracker</a> to follow your teams.
   </div>
+  <div class="banner" id="bannerT1" style="background:rgba(180,100,50,0.1);border:1px solid rgba(205,127,50,0.35);color:#cd7f32">
+    ⭐ You already have a Favourite — your next spin draws from Contender, Dark Horse, and Outsider teams only.
+  </div>
 
   <!-- Your teams -->
   <div id="myTeamsSection">
@@ -197,7 +200,8 @@ async function loadAll() {
   const draws      = drawsRes.data || [];
   const claimedSet = new Set(draws.map(d => d.team_name));
   myTeams         = draws.filter(d => d.user_id === currentUser.id).map(d => allTeams.find(t => t.name === d.team_name)).filter(Boolean);
-  availableTeams  = allTeams.filter(t => !claimedSet.has(t.name));
+  const hasT1     = myTeams.some(t => t.tier === 1);
+  availableTeams  = allTeams.filter(t => !claimedSet.has(t.name) && (!hasT1 || t.tier > 1));
 
   document.getElementById('hdrName').textContent = userProfile.first_name + ' ' + userProfile.last_name;
 }
@@ -226,6 +230,7 @@ function setupDraw() {
 
   document.getElementById('bannerClosed').classList.toggle('show', !drawOpen);
   document.getElementById('bannerDone').classList.toggle('show', drawOpen && rem <= 0);
+  document.getElementById('bannerT1').classList.toggle('show', drawOpen && rem > 0 && myTeams.some(t => t.tier === 1));
   document.getElementById('drawsBar').style.display  = (drawOpen && rem > 0) ? 'flex'  : 'none';
   document.getElementById('wheelSection').style.display = (drawOpen && rem > 0) ? 'block' : 'none';
 
@@ -398,10 +403,11 @@ async function doSpin() {
     btn.classList.remove('spinning');
     showResultModal(teamName);
     // Update wheel (remove claimed team)
-    const newAvail = availableTeams.filter(t => t.name !== teamName);
-    availableTeams = newAvail;
+    availableTeams = availableTeams.filter(t => t.name !== teamName);
     const drawnTeam = allTeams.find(t => t.name === teamName);
     if (drawnTeam) myTeams.push(drawnTeam);
+    // If user just drew a Tier 1 team, strip remaining Tier 1 from wheel
+    if (myTeams.some(t => t.tier === 1)) availableTeams = availableTeams.filter(t => t.tier > 1);
     renderMyTeams();
   });
 }
