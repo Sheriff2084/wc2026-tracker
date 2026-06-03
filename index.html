@@ -464,7 +464,7 @@ function renderResults() {
   let body = '';
   if (activeRound==='group') {
     (activeGrp==='all' ? Object.keys(GROUP_INFO) : [activeGrp]).forEach(g => {
-      const ms=groupMatches(g), p=ms.filter(m=>results[m.id]?.played).length;
+      const ms=sortedGroupMatches(g), p=ms.filter(m=>results[m.id]?.played).length;
       body += `<div class="res-block">
         <div class="res-block-hd">Group ${g}<span class="res-block-sub">${p}/6 played · ${GROUP_INFO[g].dates}</span></div>
         ${ms.map(m=>fxCard(m.t1,m.t2,results[m.id])).join('')}
@@ -488,6 +488,33 @@ function renderResults() {
 
 function setRound(r){activeRound=r;renderResults();}
 function setGrp(g){activeGrp=g;renderResults();}
+
+// ── Sort helpers ──────────────────────────────────────────────────────────────
+const MONTH_NUM = {Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+
+function parseDateSort(str) {
+  if (!str) return 99999;
+  const [day, mon] = str.trim().split(' ');
+  return (MONTH_NUM[mon] || 0) * 100 + (parseInt(day) || 0);
+}
+
+function parseTimeSort(str) {
+  if (!str) return 9999;
+  const m = str.match(/(\d+):(\d+)\s*(am|pm)/i);
+  if (!m) return 9999;
+  let h = parseInt(m[1]), mins = parseInt(m[2]);
+  if (m[3].toLowerCase() === 'pm' && h !== 12) h += 12;
+  if (m[3].toLowerCase() === 'am' && h === 12) h = 0;
+  return h * 60 + mins;
+}
+
+function sortedGroupMatches(g) {
+  return [...groupMatches(g)].sort((a, b) => {
+    const ra = results[a.id] || {}, rb = results[b.id] || {};
+    const dd = parseDateSort(ra.match_date) - parseDateSort(rb.match_date);
+    return dd !== 0 ? dd : parseTimeSort(ra.kick_off_aest) - parseTimeSort(rb.kick_off_aest);
+  });
+}
 
 function fxCard(t1,t2,r) {
   r=r||{};
