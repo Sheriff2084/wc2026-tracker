@@ -287,8 +287,12 @@ async function renderUsers() {
   const teamsByUser = {};
   (draws || []).forEach(d => { (teamsByUser[d.user_id] = teamsByUser[d.user_id] || []).push(d.team_name); });
 
-  const paidCount = users.filter(u => u.paid).length;
-  document.getElementById('userCountLabel').textContent = `${users.length} registered · ${paidCount} paid`;
+  const paidCount   = users.filter(u => u.paid).length;
+  const drawsTaken  = users.reduce((s, u) => s + (u.draws_used    || 0), 0);
+  const drawsAlloc  = users.reduce((s, u) => s + (u.draws_allowed || 1), 0);
+  const drawsAvail  = Math.max(0, 48 - drawsAlloc);
+  document.getElementById('userCountLabel').textContent =
+    `${users.length} registered · ${paidCount} paid · ${drawsTaken} draws taken · ${drawsAvail} draws available`;
   document.getElementById('usersTableBody').innerHTML = users.map(u => {
     const teams = (teamsByUser[u.id] || []).map(t => `<span class="team-chip">${t}</span>`).join('') || '<span style="color:var(--muted);font-size:13px">none yet</span>';
     const role  = u.is_super_admin ? '<span class="badge super">Super Admin</span>' : u.is_admin ? '<span class="badge admin">Admin</span>' : '<span class="badge user">User</span>';
