@@ -205,6 +205,22 @@
   .t-years.won{color:var(--gold)}.t-years.none{color:var(--muted)}
   .t-fact{padding:9px 16px 13px;font-family:'Barlow Condensed',sans-serif;font-size:16px;color:rgba(255,255,255,0.88);font-style:italic;border-top:1px solid rgba(255,255,255,0.06);line-height:1.55}
   @media(max-width:560px){.t-grid{grid-template-columns:1fr}.t-flag{width:54px}.t-av-img,.t-av-ph{width:42px;height:42px}}
+
+  /* ── Bobbleheads ─────────────────────────────────────────────────────────── */
+  .bh-section{margin-bottom:28px}
+  .bh-section-lbl{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.05)}
+  .bh-grid{display:flex;flex-wrap:wrap;gap:10px}
+  .bh-card{display:flex;flex-direction:column;align-items:center;width:88px}
+  .bh-card.bh-elim{opacity:0.28;filter:grayscale(1)}
+  @keyframes bh-bobble{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-5px)}}
+  .bh-head-wrap{animation:bh-bobble 2.6s ease-in-out infinite;transform-origin:center bottom}
+  .bh-face{width:66px;height:66px;border-radius:50%;object-fit:cover;border:3px solid rgba(245,197,24,0.5);box-shadow:0 4px 14px rgba(0,0,0,0.55);display:block;margin:0 auto}
+  .bh-initial{background:rgba(245,197,24,0.08);border:3px solid rgba(245,197,24,0.25);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:26px;color:rgba(245,197,24,0.45);width:66px;height:66px;border-radius:50%;margin:0 auto}
+  .bh-neck{width:13px;height:9px;background:rgba(200,180,160,0.25);margin:0 auto;border-radius:0 0 3px 3px}
+  .bh-shirt{width:80px;height:66px;background-size:150%;background-position:center top;clip-path:polygon(0% 28%,24% 0%,37% 14%,63% 14%,76% 0%,100% 28%,83% 40%,83% 100%,17% 100%,17% 40%);margin:0 auto;flex-shrink:0}
+  .bh-shirt-blank{background:rgba(255,255,255,0.07)}
+  .bh-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-top:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+  .bh-team{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gold);text-align:center;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
   @media(max-width:560px){
     .fx-card{grid-template-columns:1fr 88px 1fr;padding:10px 10px;gap:6px}
     .fx-flag-img,.fx-flag-blank{width:38px}.fx-name{font-size:14px}.fx-s{font-size:38px}
@@ -666,6 +682,28 @@ function renderBracket(){
   document.getElementById('bracket-inner').innerHTML=html;
 }
 
+// ── Bobblehead helper ─────────────────────────────────────────────────────────
+function makeBobblehead(teamName, ownerName, eliminated) {
+  const avatar    = avatarMap[teamName];
+  const flagVal   = FLAG_CODES[teamName];
+  const flagSrc   = flagVal ? (flagVal.startsWith('http') ? flagVal : `https://flagcdn.com/w80/${flagVal}.png`) : null;
+  const firstName = ownerName ? ownerName.split(' ')[0] : '?';
+  const initial   = ownerName ? ownerName.charAt(0).toUpperCase() : '?';
+  // Deterministic stagger so each bobblehead is slightly out of phase
+  const delay = ((teamName.charCodeAt(0) + teamName.charCodeAt(teamName.length - 1)) % 10) * 0.28;
+  return `<div class="bh-card${eliminated ? ' bh-elim' : ''}">
+    <div class="bh-head-wrap" style="animation-delay:${delay}s">
+      ${avatar
+        ? `<img src="${avatar}" class="bh-face" alt="${firstName}">`
+        : `<div class="bh-initial">${initial}</div>`}
+    </div>
+    <div class="bh-neck"></div>
+    <div class="bh-shirt${flagSrc ? '' : ' bh-shirt-blank'}"${flagSrc ? ` style="background-image:url('${flagSrc}')"` : ''}></div>
+    <div class="bh-name">${firstName}</div>
+    <div class="bh-team">${teamName}</div>
+  </div>`;
+}
+
 // ── Who's Left tab ────────────────────────────────────────────────────────────
 function renderLeaderboard(){
   const eliminated=new Set();
@@ -712,7 +750,16 @@ function renderLeaderboard(){
       <div class="sr-status ${alive?'in':'out'}">${r.status}</div>
     </div>`;
   };
-  document.getElementById('lb-inner').innerHTML=`<div class="lb-two-col">
+  // Bobblehead gallery
+  const allDrawn = Object.entries(ownerMap).sort((a,b)=>a[1].localeCompare(b[1])||a[0].localeCompare(b[0]));
+  const bhIn  = allDrawn.filter(([t])=>!eliminated.has(t));
+  const bhOut = allDrawn.filter(([t])=> eliminated.has(t));
+  const bhHtml = allDrawn.length ? `<div class="bh-section">
+    ${bhIn.length  ? `<div class="bh-section-lbl">✓ Still In</div><div class="bh-grid">${bhIn.map(([t,o])=>makeBobblehead(t,o,false)).join('')}</div>` : ''}
+    ${bhOut.length ? `<div class="bh-section-lbl" style="margin-top:18px">✕ Eliminated</div><div class="bh-grid">${bhOut.map(([t,o])=>makeBobblehead(t,o,true)).join('')}</div>` : ''}
+  </div><div style="height:1px;background:var(--border);margin-bottom:22px"></div>` : '';
+
+  document.getElementById('lb-inner').innerHTML= bhHtml + `<div class="lb-two-col">
     <div class="lb-col">
       <div class="lb-col-hd alive-hd"><span>✓ Still In</span><span class="lb-count">${inR.length} teams</span></div>
       <div>${inR.length?inR.map(r=>rowHTML(r,true)).join(''):'<div class="lb-empty">Draw not yet complete</div>'}</div>
