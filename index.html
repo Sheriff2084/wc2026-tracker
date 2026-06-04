@@ -727,6 +727,7 @@ function renderLeaderboard(){
 // ── Teams tab ─────────────────────────────────────────────────────────────────
 let teamsQuery = '';
 let teamsTier  = 0;
+const TIER_LABELS = ['','Favourite','Contender','Dark Horse','Outsider'];
 
 function setTeamsTier(t) { teamsTier = t; renderTeams(); }
 
@@ -837,8 +838,7 @@ function renderTeams() {
   const filtered = TEAMS_DATA
     .filter(t => !teamsTier || t.tier === teamsTier)
     .filter(t => !teamsQuery || t.name.toLowerCase().includes(teamsQuery));
-  const tierLabels = ['','Favourite','Contender','Dark Horse','Outsider'];
-  const pills = [[0,'All'],[1,'⭐ Favourites'],[2,'Contenders'],[3,'Dark Horses'],[4,'Outsiders']]
+  const pills =[[0,'All'],[1,'⭐ Favourites'],[2,'Contenders'],[3,'Dark Horses'],[4,'Outsiders']]
     .map(([v,l]) => `<button class="t-pill${teamsTier===v?' on':''}" onclick="setTeamsTier(${v})">${l}</button>`).join('');
   el.innerHTML = `
     <div style="display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap">
@@ -869,7 +869,7 @@ function teamCard(t) {
       <img src="${flagSrc}" class="t-flag" alt="${t.name}">
       <div class="t-identity">
         <div class="t-name">${t.name}</div>
-        <div class="t-sub">Group ${t.group} · ${tierLabels[t.tier]}</div>
+        <div class="t-sub">Group ${t.group} · ${TIER_LABELS[t.tier]}</div>
         ${owner ? `<div class="t-owner">▸ ${owner}</div>` : '<div class="t-undrawn">Not yet drawn</div>'}
       </div>
       <div class="t-avatar">
