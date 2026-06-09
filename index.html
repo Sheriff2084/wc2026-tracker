@@ -943,16 +943,20 @@ function tradeCard(a, bids, session, fmtDate) {
     ? `<span class="ac-badge badge-live">🔴 Live</span>`
     : (a.winner_id ? `<span class="ac-badge badge-sold">✓ Sold</span>` : `<span class="ac-badge badge-closed">No Bids</span>`);
 
+  const cancelBtn = (isLive && session?.is_admin)
+    ? `<button onclick="cancelAuction('${a.id}')" style="margin-left:auto;background:transparent;border:1px solid rgba(255,80,80,0.3);color:rgba(255,100,100,0.7);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='rgba(255,80,80,0.7)';this.style.color='#ff9090'" onmouseout="this.style.borderColor='rgba(255,80,80,0.3)';this.style.color='rgba(255,100,100,0.7)'">✕ Cancel Auction</button>`
+    : '';
   const footer = isLive
     ? (isMine
-        ? `<div class="ac-foot"><div class="ac-my-listing">This is your listing — bids are anonymous until it closes.</div></div>`
+        ? `<div class="ac-foot"><div class="ac-my-listing">This is your listing — bids are anonymous until it closes.</div>${cancelBtn}</div>`
         : session
           ? `<div class="ac-foot">
                <input class="ac-bid-input" id="bid-${a.id}" type="number" min="${minNext}" placeholder="$${minNext}">
                <button class="ac-bid-btn" onclick="placeBid('${a.id}')">PLACE BID</button>
                <div class="ac-min-note">Minimum $${minNext} · Bids anonymous until close</div>
+               ${cancelBtn}
              </div>`
-          : `<div class="ac-foot"><div class="ac-my-listing">Sign in to place a bid.</div></div>`)
+          : `<div class="ac-foot"><div class="ac-my-listing">Sign in to place a bid.</div>${cancelBtn}</div>`)
     : (a.winner_id
         ? `<div class="ac-winner-row">
              ${miniBobbHead(a.winner.first_name+' '+a.winner.last_name, a.winner.avatar_url, a.team_name)}
@@ -1046,6 +1050,13 @@ async function submitListTeam() {
   const { error } = await db.from('auctions').insert({
     team_name: team, seller_id: session.id, min_bid: minBid, closes_at: closesAt.toISOString()
   });
+  if (error) { alert('Error: ' + error.message); return; }
+  renderTrade();
+}
+
+async function cancelAuction(auctionId) {
+  if (!confirm('Cancel this auction?\n\nAll bids will be removed and the team stays with its current owner.')) return;
+  const { error } = await db.from('auctions').delete().eq('id', auctionId);
   if (error) { alert('Error: ' + error.message); return; }
   renderTrade();
 }
