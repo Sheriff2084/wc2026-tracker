@@ -221,6 +221,73 @@
   .bh-shirt-blank{background:rgba(255,255,255,0.07)}
   .bh-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-top:5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
   .bh-team{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gold);text-align:center;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+
+  /* ── Team Trade ─────────────────────────────────────────────────────────── */
+  .bh-sm .bh-face,.bh-sm .bh-initial{width:42px;height:42px;font-size:17px}
+  .bh-sm .bh-neck{width:9px;height:7px}
+  .bh-sm .bh-shirt{width:50px;height:42px}
+  .bh-sm{width:56px;flex-shrink:0}
+  .bh-sm .bh-name{font-size:11px}
+  .bh-sm .bh-head-wrap{animation:none}
+
+  .trade-sec-lbl{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--gold);margin:20px 0 12px;display:flex;align-items:center;gap:10px}
+  .trade-empty{font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--muted);padding:20px 0;font-style:italic}
+  .auction-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:13px;margin-bottom:8px}
+
+  .ac{background:var(--card);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+  .ac.live{border-color:rgba(245,197,24,0.28);box-shadow:0 0 0 1px rgba(245,197,24,0.06)}
+  .ac.closed{opacity:0.72}
+  .ac-hdr{display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid rgba(255,255,255,0.05)}
+  .ac-flag{width:52px;height:auto;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,0.4);flex-shrink:0}
+  .ac-ti{flex:1;min-width:0}
+  .ac-tn{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;line-height:1}
+  .ac-tm{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);margin-top:2px;letter-spacing:0.5px}
+  .ac-badge{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 9px;border-radius:6px;flex-shrink:0}
+  .badge-live{background:rgba(245,197,24,0.1);color:var(--gold);border:1px solid rgba(245,197,24,0.3)}
+  .badge-closed{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
+  .badge-sold{background:rgba(29,184,122,0.1);color:var(--green-light);border:1px solid rgba(29,184,122,0.3)}
+
+  .ac-seller{display:flex;align-items:center;gap:12px;padding:10px 15px;border-bottom:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.1)}
+  .ac-seller-info{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted)}
+  .ac-seller-info strong{color:var(--white)}
+  .ac-seller-info .ac-opening{color:var(--gold);margin-top:2px;display:block}
+
+  .ac-body{display:flex;align-items:flex-end;gap:12px;padding:13px 15px}
+  .ac-bid-block{flex:1}
+  .ac-bid-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .ac-bid-amt{font-family:'Bebas Neue',sans-serif;font-size:40px;color:var(--gold);line-height:1}
+  .ac-bid-cnt{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);margin-top:2px}
+  .ac-cd{background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.07);border-radius:9px;padding:9px 13px;text-align:center;flex-shrink:0;min-width:122px}
+  .ac-cd-time{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--white);line-height:1;letter-spacing:2px}
+  .ac-cd-time.urgent{color:#ff5555}
+  .ac-cd-sub{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .ac-cd-date{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+  .ac-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 15px;border-top:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.12)}
+  .ac-bid-input{width:88px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 10px;color:var(--white);font-family:'Bebas Neue',sans-serif;font-size:20px;outline:none;flex-shrink:0}
+  .ac-bid-input:focus{border-color:var(--gold)}
+  .ac-bid-btn{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;background:var(--gold);color:#000;border:none;border-radius:7px;padding:8px 18px;cursor:pointer;flex-shrink:0;transition:background 0.2s}
+  .ac-bid-btn:hover{background:var(--gold-dark)}
+  .ac-min-note{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);width:100%}
+  .ac-my-listing{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);font-style:italic;width:100%}
+
+  .ac-winner-row{display:flex;align-items:center;gap:12px;padding:11px 15px;border-top:1px solid rgba(255,255,255,0.05);background:rgba(29,184,122,0.05)}
+  .ac-winner-lbl{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--green-light)}
+  .ac-winner-name{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--white);margin-top:1px}
+  .ac-winner-amt{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);margin-left:auto}
+  .ac-no-bids{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);padding:11px 15px;border-top:1px solid rgba(255,255,255,0.04);font-style:italic}
+
+  .trade-list-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:22px}
+  .trade-list-hd{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .trade-list-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold)}
+  .trade-list-sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .trade-list-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .tl-lbl{display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+  .tl-in{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;outline:none}
+  .tl-in:focus{border-color:var(--gold)}
+  .tl-btn{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;background:var(--green-mid);color:#fff;border:none;border-radius:8px;padding:9px 22px;cursor:pointer;transition:background 0.2s}
+  .tl-btn:hover{background:var(--green)}
+  @media(max-width:560px){.auction-grid{grid-template-columns:1fr}}
   @media(max-width:560px){
     .fx-card{grid-template-columns:1fr 88px 1fr;padding:10px 10px;gap:6px}
     .fx-flag-img,.fx-flag-blank{width:38px}.fx-name{font-size:14px}.fx-s{font-size:38px}
@@ -249,6 +316,7 @@
   <button class="tab"    onclick="switchTab('bracket',this)">🏅 Tournament Progress</button>
   <button class="tab"    onclick="switchTab('leaderboard',this)">⚡ Who's Left</button>
   <button class="tab"    onclick="switchTab('teams',this);renderTeams()">🌍 Teams</button>
+  <button class="tab"    onclick="switchTab('trade',this);renderTrade()">⚡ Team Trade</button>
 </nav>
 
 <div id="pane-groups"      class="pane on"><div class="container" id="groups-inner"><div style="padding:40px;text-align:center;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">Loading...</div></div></div>
@@ -256,6 +324,7 @@
 <div id="pane-bracket"     class="pane"><div class="container" style="max-width:none;padding:20px 16px" id="bracket-inner"></div></div>
 <div id="pane-leaderboard" class="pane"><div class="container" id="lb-inner"></div></div>
 <div id="pane-teams"       class="pane"><div class="container" id="teams-inner"></div></div>
+<div id="pane-trade"       class="pane"><div class="container" id="trade-inner"><div style="padding:40px;text-align:center;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">Loading auctions…</div></div></div>
 
 <script>
 // ── Auth helpers ──────────────────────────────────────────────────────────────
@@ -769,6 +838,233 @@ function renderLeaderboard(){
       <div>${outR.length?outR.map(r=>rowHTML(r,false)).join(''):'<div class="lb-empty">None eliminated yet</div>'}</div>
     </div>
   </div>`;
+}
+
+// ── Team Trade tab ───────────────────────────────────────────────────────────
+let tradeTimer = null;
+
+function miniBobbHead(ownerName, avatar, teamName) {
+  const fv  = FLAG_CODES[teamName];
+  const fs  = fv ? (fv.startsWith('http') ? fv : `https://flagcdn.com/w80/${fv}.png`) : null;
+  const fn  = ownerName ? ownerName.split(' ')[0] : '?';
+  const ini = ownerName ? ownerName.charAt(0).toUpperCase() : '?';
+  return `<div class="bh-card bh-sm">
+    <div class="bh-head-wrap">
+      ${avatar ? `<img src="${avatar}" class="bh-face" alt="${fn}">` : `<div class="bh-initial">${ini}</div>`}
+    </div>
+    <div class="bh-neck"></div>
+    <div class="bh-shirt${fs?'':' bh-shirt-blank'}"${fs?` style="background-image:url('${fs}')"`:''} ></div>
+    <div class="bh-name">${fn}</div>
+  </div>`;
+}
+
+async function renderTrade() {
+  const el = document.getElementById('trade-inner');
+  if (!el) return;
+  const session = getSession();
+
+  // Close expired auctions server-side
+  try { await db.rpc('close_expired_auctions'); } catch(e){}
+
+  // Fetch auctions with seller + winner profiles
+  const { data: auctions } = await db.from('auctions')
+    .select(`id, team_name, seller_id, min_bid, closes_at, status, winner_id, winning_bid, created_at,
+             seller:profiles!seller_id(first_name, last_name, avatar_url),
+             winner:profiles!winner_id(first_name, last_name, avatar_url)`)
+    .order('status').order('closes_at');
+
+  const all = auctions || [];
+  const aIds = all.map(a => a.id);
+
+  // Fetch bid summaries
+  let bidMap = {};
+  if (aIds.length) {
+    const { data: bids } = await db.from('bids').select('auction_id, amount').in('auction_id', aIds);
+    (bids || []).forEach(b => {
+      if (!bidMap[b.auction_id]) bidMap[b.auction_id] = { count: 0, highest: 0 };
+      bidMap[b.auction_id].count++;
+      if (b.amount > bidMap[b.auction_id].highest) bidMap[b.auction_id].highest = +b.amount;
+    });
+  }
+
+  // My available teams to list
+  let myListable = [];
+  if (session) {
+    const { data: myDraws } = await db.from('draws').select('team_name').eq('user_id', session.id);
+    const activeListed = new Set(all.filter(a => a.status === 'active').map(a => a.team_name));
+    myListable = (myDraws || []).map(d => d.team_name).filter(t => !activeListed.has(t));
+  }
+
+  const active = all.filter(a => a.status === 'active');
+  const closed = all.filter(a => a.status === 'closed').slice(0, 12);
+
+  const fmtDate = iso => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-AU', {weekday:'short', day:'numeric', month:'short'}) +
+           ' · ' + d.toLocaleTimeString('en-AU', {hour:'2-digit', minute:'2-digit', timeZone:'Australia/Sydney'}) + ' AEST';
+  };
+
+  el.innerHTML =
+    (session ? tradeListForm(myListable, session) : `<div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;color:var(--muted);padding:12px 0 20px">Sign in to bid or list a team.</div>`) +
+    (active.length
+      ? `<div class="trade-sec-lbl">🔴 Live Auctions <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--muted);letter-spacing:0">(${active.length})</span></div>
+         <div class="auction-grid">${active.map(a => tradeCard(a, bidMap[a.id]||{count:0,highest:0}, session, fmtDate)).join('')}</div>`
+      : `<div class="trade-empty">No live auctions right now — list a team above to get one started.</div>`) +
+    (closed.length
+      ? `<div class="trade-sec-lbl" style="margin-top:24px">Closed Auctions</div>
+         <div class="auction-grid">${closed.map(a => tradeCard(a, bidMap[a.id]||{count:0,highest:0}, session, fmtDate)).join('')}</div>`
+      : '');
+
+  // Start countdown timers
+  if (tradeTimer) clearInterval(tradeTimer);
+  tradeTimer = setInterval(() => {
+    document.querySelectorAll('[data-closes]').forEach(el => {
+      const diff = new Date(el.dataset.closes) - new Date();
+      if (diff <= 0) { el.textContent = 'CLOSED'; el.className = 'ac-cd-time'; return; }
+      const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+      el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      el.className = 'ac-cd-time' + (diff < 300000 ? ' urgent' : '');
+    });
+  }, 1000);
+}
+
+function tradeCard(a, bids, session, fmtDate) {
+  const isLive  = a.status === 'active';
+  const isMine  = session && a.seller_id === session.id;
+  const fv      = FLAG_CODES[a.team_name];
+  const fs      = fv ? (fv.startsWith('http') ? fv : `https://flagcdn.com/w80/${fv}.png`) : null;
+  const tierCls = TM[a.team_name] ? 't'+TM[a.team_name].t : '';
+  const sName   = a.seller ? a.seller.first_name+' '+a.seller.last_name : 'Unknown';
+  const curBid  = bids.highest || 0;
+  const minNext = Math.max(+a.min_bid, curBid + 1).toFixed(0);
+  const group   = Object.entries(GROUP_INFO).find(([,g]) => g.teams.includes(a.team_name))?.[0] || '?';
+
+  const badge = isLive
+    ? `<span class="ac-badge badge-live">🔴 Live</span>`
+    : (a.winner_id ? `<span class="ac-badge badge-sold">✓ Sold</span>` : `<span class="ac-badge badge-closed">No Bids</span>`);
+
+  const footer = isLive
+    ? (isMine
+        ? `<div class="ac-foot"><div class="ac-my-listing">This is your listing — bids are anonymous until it closes.</div></div>`
+        : session
+          ? `<div class="ac-foot">
+               <input class="ac-bid-input" id="bid-${a.id}" type="number" min="${minNext}" placeholder="$${minNext}">
+               <button class="ac-bid-btn" onclick="placeBid('${a.id}')">PLACE BID</button>
+               <div class="ac-min-note">Minimum $${minNext} · Bids anonymous until close</div>
+             </div>`
+          : `<div class="ac-foot"><div class="ac-my-listing">Sign in to place a bid.</div></div>`)
+    : (a.winner_id
+        ? `<div class="ac-winner-row">
+             ${miniBobbHead(a.winner.first_name+' '+a.winner.last_name, a.winner.avatar_url, a.team_name)}
+             <div>
+               <div class="ac-winner-lbl">🏆 Won by</div>
+               <div class="ac-winner-name">${a.winner.first_name} ${a.winner.last_name}</div>
+             </div>
+             <div class="ac-winner-amt">$${(+a.winning_bid).toFixed(2)}</div>
+           </div>`
+        : `<div class="ac-no-bids">Auction closed with no bids — team returned to owner.</div>`);
+
+  return `<div class="ac ${isLive?'live':'closed'}">
+    <div class="ac-hdr">
+      ${fs ? `<img src="${fs}" class="ac-flag" alt="${a.team_name}">` : ''}
+      <div class="ac-ti">
+        <div class="ac-tn">${a.team_name}</div>
+        <div class="ac-tm">Group ${group}</div>
+      </div>
+      ${badge}
+    </div>
+    <div class="ac-seller">
+      ${miniBobbHead(sName, a.seller?.avatar_url, a.team_name)}
+      <div class="ac-seller-info">
+        <strong>${a.seller?.first_name || 'Unknown'}</strong> is selling
+        <span class="ac-opening">Opening bid: $${(+a.min_bid).toFixed(2)}</span>
+      </div>
+    </div>
+    <div class="ac-body">
+      <div class="ac-bid-block">
+        <div class="ac-bid-lbl">${isLive ? 'Current Bid' : 'Final Bid'}</div>
+        <div class="ac-bid-amt">${curBid > 0 ? '$'+curBid.toFixed(0) : '$—'}</div>
+        <div class="ac-bid-cnt">${bids.count} bid${bids.count!==1?'s':''} · ${isLive?'bidders anonymous until close':'auction closed'}</div>
+      </div>
+      <div class="ac-cd">
+        ${isLive
+          ? `<div class="ac-cd-time" data-closes="${a.closes_at}">--:--:--</div>
+             <div class="ac-cd-sub">Time left</div>
+             <div class="ac-cd-date">${fmtDate(a.closes_at)}</div>`
+          : `<div class="ac-cd-time" style="font-size:17px;color:var(--muted)">CLOSED</div>
+             <div class="ac-cd-date" style="margin-top:6px">${fmtDate(a.closes_at)}</div>`}
+      </div>
+    </div>
+    ${footer}
+  </div>`;
+}
+
+function tradeListForm(myTeams, session) {
+  if (!myTeams.length) return `<div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--muted);padding:6px 0 18px">All your teams are currently listed for auction.</div>`;
+  const myBh = miniBobbHead(session.first_name+' '+session.last_name, session.avatar_url, myTeams[0]);
+  return `<div class="trade-list-box">
+    <div class="trade-list-hd">
+      ${myBh}
+      <div>
+        <div class="trade-list-title">List a Team for Auction</div>
+        <div class="trade-list-sub">Set your opening bid and close time. Bids are anonymous until close.<br>⚠ You cannot cancel once listed.</div>
+      </div>
+    </div>
+    <div class="trade-list-form">
+      <div><label class="tl-lbl">Team</label>
+        <select id="tl-team" class="tl-in">
+          <option value="">Select…</option>
+          ${myTeams.map(t=>`<option>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div><label class="tl-lbl">Opening Bid ($AUD)</label>
+        <input id="tl-min" type="number" min="1" placeholder="e.g. 5" class="tl-in" style="width:100px">
+      </div>
+      <div><label class="tl-lbl">Close Date</label>
+        <input id="tl-date" type="date" class="tl-in" style="width:148px">
+      </div>
+      <div><label class="tl-lbl">Close Time (AEST)</label>
+        <input id="tl-time" type="time" class="tl-in" style="width:118px">
+      </div>
+      <button class="tl-btn" onclick="submitListTeam()">LIST FOR AUCTION</button>
+    </div>
+  </div>`;
+}
+
+async function submitListTeam() {
+  const team   = document.getElementById('tl-team')?.value;
+  const minBid = parseFloat(document.getElementById('tl-min')?.value);
+  const date   = document.getElementById('tl-date')?.value;
+  const time   = document.getElementById('tl-time')?.value;
+  if (!team)             { alert('Please select a team.'); return; }
+  if (!minBid || minBid < 1) { alert('Please enter a minimum bid of at least $1.'); return; }
+  if (!date || !time)    { alert('Please set a close date and time.'); return; }
+  const closesAt = new Date(`${date}T${time}:00+10:00`);
+  if (closesAt <= new Date()) { alert('Close time must be in the future.'); return; }
+  const session = getSession();
+  if (!session) return;
+  const { error } = await db.from('auctions').insert({
+    team_name: team, seller_id: session.id, min_bid: minBid, closes_at: closesAt.toISOString()
+  });
+  if (error) { alert('Error: ' + error.message); return; }
+  renderTrade();
+}
+
+async function placeBid(auctionId) {
+  const session = getSession();
+  if (!session) { alert('Please sign in to bid.'); return; }
+  const input  = document.getElementById('bid-' + auctionId);
+  const amount = parseFloat(input?.value);
+  if (!amount || amount <= 0) { alert('Please enter a bid amount.'); return; }
+  const { error } = await db.rpc('place_bid', { p_auction_id: auctionId, p_bidder_id: session.id, p_amount: amount });
+  if (error) {
+    const msgs = { auction_closed:'This auction has closed.', auction_expired:'This auction just closed.',
+      cannot_bid_own:"You can't bid on your own team!", below_minimum:'Your bid is below the minimum.',
+      bid_too_low:'Your bid must be higher than the current bid.' };
+    alert(msgs[error.message] || 'Error: ' + error.message);
+    return;
+  }
+  renderTrade();
 }
 
 // ── Teams tab ─────────────────────────────────────────────────────────────────
