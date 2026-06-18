@@ -436,7 +436,7 @@ async function loadData() {
   ownerMap = {}; avatarMap = {};
   (drawsRes.data || []).forEach(d => {
     if (d.profiles) {
-      ownerMap[d.team_name]  = d.profiles.first_name + ' ' + d.profiles.last_name;
+      ownerMap[d.team_name]  = [d.profiles.first_name, d.profiles.last_name].filter(Boolean).join(' ');
       avatarMap[d.team_name] = d.profiles.avatar_url || null;
     }
   });
