@@ -436,7 +436,7 @@ async function loadData() {
   ownerMap = {}; avatarMap = {};
   (drawsRes.data || []).forEach(d => {
     if (d.profiles) {
-      ownerMap[d.team_name]  = [d.profiles.first_name, d.profiles.last_name].filter(Boolean).join(' ');
+      ownerMap[d.team_name]  = d.profiles.first_name;
       avatarMap[d.team_name] = d.profiles.avatar_url || null;
     }
   });
@@ -756,7 +756,7 @@ function makeBobblehead(teamName, ownerName, eliminated) {
   const avatar    = avatarMap[teamName];
   const flagVal   = FLAG_CODES[teamName];
   const flagSrc   = flagVal ? (flagVal.startsWith('http') ? flagVal : `https://flagcdn.com/w80/${flagVal}.png`) : null;
-  const firstName = ownerName ? ownerName.split(' ')[0] : '?';
+  const firstName = ownerName || '?';
   const initial   = ownerName ? ownerName.charAt(0).toUpperCase() : '?';
   // Deterministic stagger so each bobblehead is slightly out of phase
   const delay = ((teamName.charCodeAt(0) + teamName.charCodeAt(teamName.length - 1)) % 10) * 0.28;
