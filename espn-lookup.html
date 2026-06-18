@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESPN Score Lookup — WC2026 Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green:#0a6640;--green-mid:#0d8a56;--green-light:#1db87a;
+    --gold:#f5c518;--gold-dark:#d4a800;
+    --dark:#0a0f14;--darker:#060a0e;--mid:#141e28;--card:#1a2535;
+    --border:rgba(245,197,24,0.2);--white:#f0f4f8;--muted:#8899aa;
+    --red:#ff4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Barlow',sans-serif;background:var(--darker);color:var(--white);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(180deg,transparent,transparent 40px,rgba(255,255,255,0.015) 40px,rgba(255,255,255,0.015) 80px);pointer-events:none;z-index:0}
+
+  .hdr{position:relative;z-index:1;background:linear-gradient(135deg,#0a1520 0%,#0e2d1a 40%,#0a6640 100%);border-bottom:3px solid var(--gold);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .hdr-brand{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--gold)}
+  .hdr-right{display:flex;gap:10px;align-items:center}
+  .btn-sm{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:7px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-block}
+  .btn-sm:hover{color:var(--white);border-color:rgba(255,255,255,0.35)}
+
+  .container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:28px 18px}
+
+  .section{background:var(--card);border:1px solid rgba(255,255,255,0.07);border-radius:14px;overflow:hidden;margin-bottom:24px}
+  .section-hd{padding:16px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);background:linear-gradient(90deg,rgba(10,102,64,0.2),transparent)}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold)}
+  .section-body{padding:20px 22px}
+
+  /* Controls */
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  input[type=date]{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:9px 14px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s}
+  input[type=date]:focus{border-color:var(--gold)}
+  .fetch-btn{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:9px 26px;cursor:pointer;transition:background 0.2s}
+  .fetch-btn:hover{background:var(--gold-dark)}
+  .fetch-btn.green{background:var(--green-mid);color:#fff}
+  .fetch-btn.green:hover{background:var(--green)}
+  .url-line{font-family:monospace;font-size:11px;color:rgba(255,255,255,0.25);margin-top:8px;word-break:break-all}
+
+  /* Match rows */
+  .group-block{margin-bottom:22px}
+  .group-label{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:var(--gold);background:rgba(245,197,24,0.07);border:1px solid rgba(245,197,24,0.15);border-radius:7px;padding:6px 16px;display:inline-block;margin-bottom:10px}
+
+  .score-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+  .score-row.final{border-left:3px solid var(--green-light)}
+  .score-row.live  {border-left:3px solid var(--gold);background:rgba(245,197,24,0.04)}
+  .score-row.sched {border-left:3px solid rgba(255,255,255,0.1);opacity:0.7}
+
+  .sr-status{font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;min-width:60px;flex-shrink:0}
+  .sr-status.final{color:var(--green-light)}
+  .sr-status.live {color:var(--gold)}
+  .sr-status.sched{color:var(--muted)}
+
+  .sr-teams{flex:1;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;min-width:200px}
+  .sr-score{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);min-width:70px;text-align:center;letter-spacing:2px}
+  .sr-vs{font-size:13px;color:var(--muted);flex-shrink:0}
+  .sr-meta{font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);flex-shrink:0}
+
+  .copy-btn{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:6px 14px;border-radius:6px;border:1px solid rgba(245,197,24,0.3);background:transparent;color:var(--gold);cursor:pointer;transition:all 0.2s;flex-shrink:0}
+  .copy-btn:hover{background:rgba(245,197,24,0.1)}
+  .copy-btn.copied{border-color:var(--green-light);color:var(--green-light)}
+
+  .empty-state{text-align:center;padding:40px;font-family:'Barlow Condensed',sans-serif;font-size:16px;color:var(--muted)}
+  .error-msg{background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.25);border-radius:8px;padding:14px 18px;color:#ff9090;font-family:'Barlow Condensed',sans-serif;font-size:14px;line-height:1.6}
+
+  .toast{position:fixed;bottom:20px;right:18px;padding:11px 18px;border-radius:9px;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:0.5px;transform:translateY(60px);opacity:0;transition:all 0.3s;z-index:300;background:var(--green);border:1px solid var(--green-light);color:#fff}
+  .toast.show{transform:translateY(0);opacity:1}
+
+  .legend{display:flex;gap:16px;font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="hdr">
+  <div class="hdr-brand">⚽ ESPN Score Lookup</div>
+  <div class="hdr-right">
+    <a href="espn-test.html" class="btn-sm">API Test</a>
+    <a href="admin.html" class="btn-sm">← Admin</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">Fetch Scores from ESPN</span>
+      <div class="legend">
+        <span><div class="legend-dot" style="background:var(--green-light)"></div> Final</span>
+        <span><div class="legend-dot" style="background:var(--gold)"></div> Live</span>
+        <span><div class="legend-dot" style="background:rgba(255,255,255,0.2)"></div> Scheduled</span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="controls">
+        <input type="date" id="datePick">
+        <button class="fetch-btn" onclick="fetchScores()">Fetch Scores</button>
+        <button class="fetch-btn green" onclick="fetchScores('today')">Today</button>
+        <button class="fetch-btn green" onclick="fetchScores('yesterday')">Yesterday</button>
+      </div>
+      <div class="url-line" id="urlLine">—</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);margin-top:10px">
+        ⚠ ESPN dates are <strong style="color:#fff">UTC</strong> — Australian matches may appear under yesterday's date. If today shows nothing, try Yesterday.
+      </div>
+    </div>
+  </div>
+
+  <div id="resultsArea">
+    <div class="section">
+      <div class="section-body">
+        <div class="empty-state">Choose a date above and click Fetch Scores</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('datePick').value = today;
+
+  function dateToESPN(str) { return str.replace(/-/g,''); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  async function fetchScores(mode) {
+    let dateStr = document.getElementById('datePick').value;
+    if (mode === 'today') {
+      dateStr = new Date().toISOString().slice(0,10);
+      document.getElementById('datePick').value = dateStr;
+    } else if (mode === 'yesterday') {
+      const d = new Date(); d.setDate(d.getDate()-1);
+      dateStr = d.toISOString().slice(0,10);
+      document.getElementById('datePick').value = dateStr;
+    }
+
+    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${dateToESPN(dateStr)}`;
+    document.getElementById('urlLine').textContent = '⟳ ' + url;
+    document.getElementById('resultsArea').innerHTML = `<div class="section"><div class="section-body"><div class="empty-state">Loading ESPN data…</div></div></div>`;
+
+    try {
+      const r    = await fetch(url);
+      const data = await r.json();
+      document.getElementById('urlLine').textContent = '✓ ' + url + '  — ' + (data.events||[]).length + ' match(es)';
+      renderResults(data.events || [], dateStr);
+    } catch(e) {
+      document.getElementById('resultsArea').innerHTML = `
+        <div class="section"><div class="section-body">
+          <div class="error-msg">
+            <strong>Fetch failed:</strong> ${e.message}<br><br>
+            Try opening the URL directly: <a href="${url}" target="_blank" style="color:#7ec8e3">${url}</a>
+          </div>
+        </div></div>`;
+    }
+  }
+
+  // ESPN sometimes uses different names — map to our DB names
+  const ESPN_NAME_MAP = {
+    'Korea Republic':'South Korea', 'Czech Republic':'Czechia',
+    "Côte d'Ivoire":'Ivory Coast', "Cote d'Ivoire":'Ivory Coast',
+    'Turkey':'Türkiye', 'Cabo Verde':'Cape Verde',
+    'Congo DR':'DR Congo', 'Congo, DR':'DR Congo',
+    'Democratic Republic of Congo':'DR Congo',
+    'Bosnia and Herzegovina':'Bosnia & Herz.', 'Bosnia & Herzegovina':'Bosnia & Herz.',
+    'Curacao':'Curaçao', 'USA':'United States',
+  };
+
+  // Team → group lookup (derived from admin GROUP_INFO)
+  const TEAM_GROUP = {};
+  const GROUPS = {
+    A:['Mexico','South Korea','South Africa','Czechia'],
+    B:['Canada','Switzerland','Qatar','Bosnia & Herz.'],
+    C:['Brazil','Morocco','Scotland','Haiti'],
+    D:['United States','Australia','Paraguay','Türkiye'],
+    E:['Germany','Ivory Coast','Ecuador','Curaçao'],
+    F:['Netherlands','Japan','Sweden','Tunisia'],
+    G:['Belgium','Egypt','Iran','New Zealand'],
+    H:['Spain','Cape Verde','Saudi Arabia','Uruguay'],
+    I:['France','Senegal','Iraq','Norway'],
+    J:['Argentina','Algeria','Austria','Jordan'],
+    K:['Portugal','DR Congo','Uzbekistan','Colombia'],
+    L:['England','Croatia','Ghana','Panama'],
+  };
+  Object.entries(GROUPS).forEach(([g, teams]) => teams.forEach(t => TEAM_GROUP[t] = g));
+
+  function resolveTeam(espnName) {
+    return ESPN_NAME_MAP[espnName] || espnName;
+  }
+
+  function extractGroup(ev) {
+    const comp = ev.competitions?.[0];
+    const home = comp?.competitors?.find(c => c.homeAway === 'home');
+    const away = comp?.competitors?.find(c => c.homeAway === 'away');
+    const homeName = resolveTeam(home?.team?.displayName || '');
+    const awayName = resolveTeam(away?.team?.displayName || '');
+    return TEAM_GROUP[homeName] || TEAM_GROUP[awayName] || null;
+  }
+
+  function renderResults(events, dateStr) {
+    if (!events.length) {
+      document.getElementById('resultsArea').innerHTML = `<div class="section"><div class="section-body"><div class="empty-state">No matches found for ${dateStr}</div></div></div>`;
+      return;
+    }
+
+    const debugHtml = '';
+
+    // Group events
+    const groups = {};
+    const ungrouped = [];
+
+    events.forEach(ev => {
+      const key = extractGroup(ev);
+      if (key) {
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(ev);
+      } else {
+        ungrouped.push(ev);
+      }
+    });
+
+    let html = '';
+
+    // Render grouped matches
+    const sortedGroups = Object.keys(groups).sort();
+    sortedGroups.forEach(g => {
+      html += `<div class="group-block">
+        <div class="group-label">GROUP ${g}</div>`;
+      groups[g].forEach(ev => { html += renderRow(ev); });
+      html += `</div>`;
+    });
+
+    // Render ungrouped (knockout etc)
+    if (ungrouped.length) {
+      html += `<div class="group-block">
+        <div class="group-label" style="color:var(--muted);border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.03)">OTHER / KNOCKOUT</div>`;
+      ungrouped.forEach(ev => { html += renderRow(ev); });
+      html += `</div>`;
+    }
+
+    document.getElementById('resultsArea').innerHTML = `<div class="section"><div class="section-hd"><span class="section-title">Results — ${dateStr}</span><span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);letter-spacing:1px">${events.length} match(es)</span></div><div class="section-body">${debugHtml}${html}</div></div>`;
+  }
+
+  function renderRow(ev) {
+    const comp      = ev.competitions?.[0];
+    const statusRaw = ev.status?.type?.name  || '';
+    const statusTxt = ev.status?.type?.shortDetail || statusRaw || 'Unknown';
+    const state     = ev.status?.type?.state || '';         // 'pre' | 'in' | 'post'
+    const completed = ev.status?.type?.completed === true;
+
+    // Use all available signals — ESPN soccer may use state/completed rather than STATUS_FINAL name
+    const isFinal = completed || state === 'post' || statusRaw === 'STATUS_FINAL' || statusRaw === 'STATUS_FULL_TIME';
+    const isLive  = !isFinal && (state === 'in' || statusRaw.includes('PROGRESS') || statusRaw.includes('HALFTIME'));
+    const rowCls  = isFinal ? 'final' : isLive ? 'live' : 'sched';
+
+    const home      = comp?.competitors?.find(c => c.homeAway === 'home');
+    const away      = comp?.competitors?.find(c => c.homeAway === 'away');
+    const homeName  = home?.team?.displayName || '?';
+    const awayName  = away?.team?.displayName || '?';
+    const homeScore = home?.score ?? '–';
+    const awayScore = away?.score ?? '–';
+    const kickoff   = ev.date ? new Date(ev.date).toLocaleString('en-AU',{hour:'2-digit',minute:'2-digit',timeZone:'Australia/Sydney'}) + ' AEST' : '';
+
+    // Show scores whenever the match has them (final or live)
+    const hasScores = (isFinal || isLive) && homeScore !== '–' && awayScore !== '–';
+    const scoreHtml = hasScores ? `${homeScore} – ${awayScore}` : kickoff;
+
+    const debugBadge = '';
+
+    // Escape team names for inline onclick (handle apostrophes etc)
+    const safeHome = homeName.replace(/'/g, "\\'");
+    const safeAway = awayName.replace(/'/g, "\\'");
+
+    return `<div class="score-row ${rowCls}" id="row_${ev.id}">
+      <div class="sr-status ${rowCls}">${statusTxt}${debugBadge}</div>
+      <div class="sr-teams">
+        <span>${homeName}</span>
+        <span class="sr-vs">vs</span>
+        <span>${awayName}</span>
+      </div>
+      <div class="sr-score">${hasScores ? `${homeScore} – ${awayScore}` : ''}</div>
+      <div class="sr-meta">${isFinal ? '' : kickoff}</div>
+      <button class="copy-btn" onclick="copyScore(this,'${safeHome}','${safeAway}','${homeScore}','${awayScore}')"
+        ${!hasScores ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>Copy Score</button>
+    </div>`;
+  }
+
+  function copyScore(btn, home, away, homeScore, awayScore) {
+    const text = `${home} ${homeScore} – ${awayScore} ${away}`;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ Copied';
+      btn.classList.add('copied');
+      showToast('Copied: ' + text);
+      setTimeout(() => { btn.textContent = 'Copy Score'; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => {
+      // Fallback: prompt
+      prompt('Copy this score:', text);
+    });
+  }
+</script>
+</body>
+</html>
