@@ -490,7 +490,7 @@ async function uploadAvatar(uid, input) {
 
   showToast('Uploading photo...', 'ok');
   const ext  = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const path = `${uid}.${ext}`;
+  const path = `${uid}_${Date.now()}.${ext}`;
 
   const { error: upErr } = await db.storage
     .from('avatars')
