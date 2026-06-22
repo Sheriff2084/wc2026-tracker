@@ -80,6 +80,14 @@
   .save-btn:hover{background:var(--gold-dark)}
   .save-btn:disabled{background:rgba(245,197,24,0.25);color:rgba(0,0,0,0.3);cursor:not-allowed}
 
+  /* Manual eliminations */
+  .elim-group{margin-bottom:14px}
+  .elim-group-lbl{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:6px}
+  .elim-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .elim-chip{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:0.5px;padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:var(--white);cursor:pointer;transition:all 0.18s}
+  .elim-chip:hover{border-color:rgba(255,255,255,0.3)}
+  .elim-chip.elim-on{background:rgba(255,68,68,0.15);border-color:rgba(255,80,80,0.5);color:#ff9090;text-decoration:line-through}
+
   /* Knockout form */
   .ko-section{margin-bottom:22px}
   .ko-round-label{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06)}
@@ -181,6 +189,15 @@
     </div>
   </div>
 
+  <!-- Manual Eliminations -->
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">Manual Eliminations</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;color:var(--muted);letter-spacing:1px">Click a team to mark/unmark as eliminated</span>
+    </div>
+    <div class="section-body" id="elimPanel">Loading…</div>
+  </div>
+
   <!-- Knockout Results -->
   <div class="section">
     <div class="section-hd"><span class="section-title">Knockout Results</span></div>
@@ -263,6 +280,7 @@ let activeGroup = 'A';
 
   await loadAll();
   renderDrawSettings();
+  renderElimPanel();
   renderUsers();
   renderGroupTabs();
   renderGroupForms(activeGroup);
@@ -274,7 +292,7 @@ async function loadAll() {
     db.from('draws').select('team_name, user_id, profiles(first_name, last_name)'),
     db.from('group_results').select('*'),
     db.from('knockout_results').select('*'),
-    db.from('draw_settings').select('draw_open').single(),
+    db.from('draw_settings').select('draw_open, eliminated_teams').single(),
   ]);
 
   ownerMap = {};
@@ -286,7 +304,8 @@ async function loadAll() {
   koResultsData = {};
   (koRes.data || []).forEach(r => { koResultsData[r.match_id] = r; });
 
-  window._drawOpen = settingsRes.data?.draw_open || false;
+  window._drawOpen        = settingsRes.data?.draw_open || false;
+  window._eliminatedTeams = new Set(settingsRes.data?.eliminated_teams || []);
 }
 
 // ── Draw settings ──────────────────────────────────────────────────────────
@@ -305,6 +324,30 @@ async function toggleDraw(open) {
   window._drawOpen = open;
   renderDrawSettings();
   showToast('Draw ' + (open ? 'opened ✓' : 'closed ✓'), 'ok');
+}
+
+// ── Manual Eliminations ──────────────────────────────────────────────────────
+function renderElimPanel() {
+  const html = Object.entries(GROUP_INFO).map(([g, info]) => {
+    const chips = info.teams.map(t => {
+      const on = window._eliminatedTeams.has(t);
+      return `<button class="elim-chip${on?' elim-on':''}" onclick="toggleElim('${t.replace(/'/g,"\\'")}')">
+        ${t}${on ? ' ✕' : ''}
+      </button>`;
+    }).join('');
+    return `<div class="elim-group"><div class="elim-group-lbl">Group ${g}</div><div class="elim-chips">${chips}</div></div>`;
+  }).join('');
+  document.getElementById('elimPanel').innerHTML = html;
+}
+
+async function toggleElim(team) {
+  if (window._eliminatedTeams.has(team)) window._eliminatedTeams.delete(team);
+  else window._eliminatedTeams.add(team);
+  const arr = [...window._eliminatedTeams];
+  const { error } = await db.from('draw_settings').update({ eliminated_teams: arr }).eq('id', 1);
+  if (error) { showToast('Save failed: ' + error.message, 'err'); return; }
+  renderElimPanel();
+  showToast(team + (window._eliminatedTeams.has(team) ? ' marked eliminated ✓' : ' restored ✓'), 'ok');
 }
 
 // ── Users ────────────────────────────────────────────────────────────────────
