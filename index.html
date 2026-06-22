@@ -213,6 +213,9 @@
   .bh-card{display:flex;flex-direction:column;align-items:center;width:88px}
   .bh-card.bh-elim{opacity:0.28;filter:grayscale(1)}
   .bh-card.bh-pending{opacity:0.65;filter:sepia(0.5) hue-rotate(10deg)}
+  .elim-badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:rgba(255,68,68,0.18);color:#ff9090;border:1px solid rgba(255,68,68,0.35);border-radius:4px;padding:1px 6px;white-space:nowrap}
+  .pending-badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:rgba(245,197,24,0.12);color:var(--gold);border:1px solid rgba(245,197,24,0.3);border-radius:4px;padding:1px 6px;white-space:nowrap}
+  .team-row.elim{opacity:0.5}
   @keyframes bh-bobble{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-5px)}}
   .bh-head-wrap{animation:bh-bobble 2.6s ease-in-out infinite;transform-origin:center bottom}
   .bh-face{width:66px;height:66px;border-radius:50%;object-fit:cover;border:3px solid rgba(245,197,24,0.5);box-shadow:0 4px 14px rgba(0,0,0,0.55);display:block;margin:0 auto}
@@ -383,6 +386,8 @@ let knockoutMap       = {};
 let groupStandings    = {};
 let totalParticipants = 0;
 let manualEliminated  = new Set();
+let eliminatedTeams   = new Set();
+let pendingTeams      = new Set();
 
 function groupMatches(g) {
   const t = GROUP_INFO[g].teams;
@@ -412,6 +417,37 @@ function computeStandings() {
       .map(t => ({team:t, ...stats[t]}))
       .sort((a,b) => (b.pts-a.pts)||(b.gd-a.gd)||(b.gf-a.gf)||a.team.localeCompare(b.team));
   });
+}
+
+function computeEliminated() {
+  eliminatedTeams = new Set();
+  pendingTeams    = new Set();
+  manualEliminated.forEach(t=>eliminatedTeams.add(t));
+  Object.values(knockoutMap).forEach(k=>{ if(k.played&&k.loser) eliminatedTeams.add(k.loser); });
+  const allGroupsDone = Object.keys(GROUP_INFO).every(g=>groupMatches(g).every(m=>results[m.id]?.played));
+  const thirdPlacers  = [];
+  Object.keys(GROUP_INFO).forEach(g=>{
+    const st=groupStandings[g];
+    if(!st||st.length<4) return;
+    if(groupMatches(g).every(m=>results[m.id]?.played)){
+      eliminatedTeams.add(st[3].team);
+      thirdPlacers.push({team:st[2].team,pts:st[2].pts,gd:st[2].gd,gf:st[2].gf});
+    } else {
+      const thirdPts=st[2].pts;
+      if(thirdPts===0) return;
+      st.forEach(s=>{
+        if(eliminatedTeams.has(s.team)) return;
+        const rem=groupMatches(g).filter(m=>(m.t1===s.team||m.t2===s.team)&&!results[m.id]?.played).length;
+        if(s.pts+rem*3<thirdPts) eliminatedTeams.add(s.team);
+      });
+    }
+  });
+  if(allGroupsDone&&thirdPlacers.length===12){
+    thirdPlacers.sort((a,b)=>(b.pts-a.pts)||(b.gd-a.gd)||(b.gf-a.gf)||a.team.localeCompare(b.team));
+    thirdPlacers.forEach((t,i)=>{ if(i>=8) eliminatedTeams.add(t.team); });
+  } else {
+    thirdPlacers.forEach(t=>{ if(!eliminatedTeams.has(t.team)) pendingTeams.add(t.team); });
+  }
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
@@ -452,6 +488,7 @@ async function loadData() {
   (knockoutRes.data || []).forEach(r => { knockoutMap[r.match_id] = r; });
 
   computeStandings();
+  computeEliminated();
 }
 
 async function setupNav() {
@@ -533,10 +570,12 @@ function renderGroups() {
         <div class="group-hd"><span class="group-lbl">Group ${g}</span><span class="group-date">${GROUP_INFO[g].dates}</span></div>
         <div class="group-teams">${st.map((s,i)=>{
           const m=TM[s.team]||{t:4};const own=ownerMap[s.team];
-          return `<div class="team-row ${TC[m.t]}" style="gap:10px">
+          const isElim=eliminatedTeams.has(s.team), isPend=pendingTeams.has(s.team);
+          const badge=isElim?`<span class="elim-badge">Eliminated</span>`:isPend?`<span class="pending-badge">Best 3rd?</span>`:'';
+          return `<div class="team-row ${TC[m.t]}${isElim?' elim':''}" style="gap:10px">
             ${grpFlag(s.team)}
             <div class="team-info">
-              <div class="team-name">${s.team}</div>
+              <div class="team-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${s.team}${badge}</div>
               ${own?`<div class="team-owner">▸ ${own}</div>`:''}
             </div>
             <div style="text-align:right;padding-left:4px">
@@ -653,11 +692,15 @@ function fxCard(t1,t2,r) {
   const dt    = [r.match_date, r.kick_off_aest ? r.kick_off_aest+' AEST' : ''].filter(Boolean).join(' · ');
   const venue = r.venue || '';
   const hasSchedule = dt || venue;
-  const team=(name,owner,win,tbd)=>`<div class="fx-team">
-    ${tbd ? '<div class="fx-flag-blank"></div>' : flagImg(name)}
-    <span class="fx-name${win?' win':''}${tbd?' tbd':''}">${name}</span>
-    ${owner&&!tbd?`<span class="fx-owner">▸ ${owner}</span>`:''}
-  </div>`;
+  const team=(name,owner,win,tbd)=>{
+    const isElim=!tbd&&eliminatedTeams.has(name), isPend=!tbd&&pendingTeams.has(name);
+    return `<div class="fx-team">
+      ${tbd ? '<div class="fx-flag-blank"></div>' : flagImg(name)}
+      <span class="fx-name${win?' win':''}${tbd?' tbd':''}">${name}</span>
+      ${owner&&!tbd?`<span class="fx-owner">▸ ${owner}</span>`:''}
+      ${isElim?`<span class="elim-badge">Eliminated</span>`:isPend?`<span class="pending-badge">Best 3rd?</span>`:''}
+    </div>`;
+  };
   const midContent = played
     ? `<div class="fx-scores"><span class="fx-s${t1w?' win':''}">${s1}</span><span class="fx-sep">–</span><span class="fx-s${t2w?' win':''}">${s2}</span></div>
        ${dt?`<div class="fx-datetime">${dt}</div>`:''}
@@ -780,55 +823,9 @@ function makeBobblehead(teamName, ownerName, eliminated, pending=false) {
 
 // ── Who's Left tab ────────────────────────────────────────────────────────────
 function renderLeaderboard(){
-  const eliminated = new Set();
-  const pending    = new Set(); // finished 3rd, awaiting best-3rd verdict
-
+  const eliminated = eliminatedTeams;
+  const pending    = pendingTeams;
   const champ=(()=>{const f=Object.values(knockoutMap).find(k=>k.match_id==='FINAL'&&k.played);return f?f.winner:null;})();
-
-  // Knockout eliminations
-  Object.values(knockoutMap).forEach(k=>{if(k.played&&k.loser)eliminated.add(k.loser);});
-  // Manual eliminations set in admin
-  manualEliminated.forEach(t=>eliminated.add(t));
-
-  // Are all 12 groups fully played?
-  const allGroupsDone = Object.keys(GROUP_INFO).every(g=>
-    groupMatches(g).every(m=>results[m.id]?.played)
-  );
-
-  // Collect 3rd-place finishers from completed groups
-  const thirdPlacers = [];
-
-  Object.keys(GROUP_INFO).forEach(g=>{
-    const st = groupStandings[g];
-    if(!st||st.length<4) return;
-    const allPlayed = groupMatches(g).every(m=>results[m.id]?.played);
-
-    if(allPlayed){
-      // 4th place always out
-      eliminated.add(st[3].team);
-      // 3rd place enters the best-3rd pool
-      thirdPlacers.push({team:st[2].team, pts:st[2].pts, gd:st[2].gd, gf:st[2].gf});
-    } else {
-      // Statistical elimination — can't reach 3rd even winning every remaining match
-      const thirdPts = st[2].pts;
-      if(thirdPts===0) return;
-      st.forEach(s=>{
-        if(eliminated.has(s.team)) return;
-        const remaining = groupMatches(g).filter(m=>
-          (m.t1===s.team||m.t2===s.team) && !results[m.id]?.played
-        ).length;
-        if(s.pts + remaining*3 < thirdPts) eliminated.add(s.team);
-      });
-    }
-  });
-
-  // Resolve best-3rd once all 12 groups are done; otherwise mark as pending
-  if(allGroupsDone && thirdPlacers.length===12){
-    thirdPlacers.sort((a,b)=>(b.pts-a.pts)||(b.gd-a.gd)||(b.gf-a.gf)||a.team.localeCompare(b.team));
-    thirdPlacers.forEach((t,i)=>{ if(i>=8) eliminated.add(t.team); });
-  } else {
-    thirdPlacers.forEach(t=>{ if(!eliminated.has(t.team)) pending.add(t.team); });
-  }
 
   function teamStatus(team){
     if(champ&&team===champ) return{label:'🏆 CHAMPION',cls:'in'};
