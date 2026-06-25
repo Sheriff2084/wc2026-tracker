@@ -789,10 +789,6 @@ function renderLeaderboard(){
   const champ=(()=>{const f=Object.values(knockoutMap).find(k=>k.match_id==='M104'&&k.played);return f?f.winner:null;})();
   Object.values(knockoutMap).forEach(k=>{if(k.played&&k.loser)eliminated.add(k.loser);});
   manualEliminated.forEach(t=>eliminated.add(t));
-  Object.keys(GROUP_INFO).forEach(g=>{
-    if(!groupMatches(g).every(m=>results[m.id]&&results[m.id].played))return;
-    (groupStandings[g]||[]).forEach((s,i)=>{if(i>=2)eliminated.add(s.team);});
-  });
 
   function teamStatus(team){
     if(champ&&team===champ) return{label:'🏆 CHAMPION',cls:'in'};
