@@ -604,8 +604,8 @@ function renderResults() {
       const ko=knockoutMap[id];
       if (ko?.played) return fxCard(ko.winner,ko.loser,{score1:ko.score1,score2:ko.score2,played:true});
       const def=R32_MATCHES.find(m=>m[0]===id);
-      const t1=ko?.team1||(def?(resolveSlot(def[2][0],def[2][1])||'TBD'):'TBD');
-      const t2=ko?.team2||(def?(resolveSlot(def[3][0],def[3][1])||'TBD'):'TBD');
+      const t1=ko?(ko.team1||'TBD'):(def?(resolveSlot(def[2][0],def[2][1])||'TBD'):'TBD');
+      const t2=ko?(ko.team2||'TBD'):(def?(resolveSlot(def[3][0],def[3][1])||'TBD'):'TBD');
       return fxCard(t1,t2,null);
     }).join('')}</div>`;
   }
@@ -687,7 +687,9 @@ function buildHalf(side){
   const sm=R32_MATCHES.filter(m=>m[1]===side);
   const r32=sm.map(([mid,,sA,sB])=>{
     const ko=knockoutMap[mid];
-    const tA=mkT(ko?.team1||resolveSlot(sA[0],sA[1]),mid),tB=mkT(ko?.team2||resolveSlot(sB[0],sB[1]),mid);
+    const t1n=ko?(ko.team1||null):resolveSlot(sA[0],sA[1]);
+    const t2n=ko?(ko.team2||null):resolveSlot(sB[0],sB[1]);
+    const tA=mkT(t1n,mid),tB=mkT(t2n,mid);
     if(ko&&ko.played){tA.winner=tA.name===ko.winner;tA.elim=tA.name===ko.loser;tB.winner=tB.name===ko.winner;tB.elim=tB.name===ko.loser;}
     return[tA,tB];
   });

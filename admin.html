@@ -555,8 +555,8 @@ async function saveKoMatch(id) {
     winner = s1 >= s2 ? t1 : t2;
     loser  = winner === t1 ? t2 : t1;
   }
-  const row = {
-    match_id: id, team1: t1, team2: t2,
+  const fields = {
+    team1: t1, team2: t2,
     score1: s1, score2: s2, winner, loser, played,
     match_date:    document.getElementById('kodt-'+id).value.trim() || null,
     kick_off_aest: document.getElementById('kotm-'+id).value.trim() || null,
@@ -564,12 +564,15 @@ async function saveKoMatch(id) {
   };
   let error;
   if (koResultsData[id]) {
-    ({ error } = await db.from('knockout_results').update(row).eq('match_id', id));
+    ({ error } = await db.from('knockout_results').update(fields).eq('match_id', id));
   } else {
-    ({ error } = await db.from('knockout_results').insert(row));
+    ({ error } = await db.from('knockout_results').insert({ match_id: id, ...fields }));
   }
   if (error) { showToast('Error: ' + error.message, 'err'); return; }
-  koResultsData[id] = row;
+  koResultsData[id] = { match_id: id, ...fields };
+  // Force dropdowns to reflect saved value so clearing is visible immediately
+  document.getElementById('kot1-'+id).value = t1 || '';
+  document.getElementById('kot2-'+id).value = t2 || '';
   document.getElementById('kocard-'+id).classList.toggle('played', played);
   showToast(id + ' saved ✓', 'ok');
 }
