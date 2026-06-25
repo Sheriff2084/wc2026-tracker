@@ -562,7 +562,12 @@ async function saveKoMatch(id) {
     kick_off_aest: document.getElementById('kotm-'+id).value.trim() || null,
     venue:         document.getElementById('kovn-'+id).value.trim() || null,
   };
-  const { error } = await db.from('knockout_results').upsert(row, { onConflict: 'match_id' });
+  let error;
+  if (koResultsData[id]) {
+    ({ error } = await db.from('knockout_results').update(row).eq('match_id', id));
+  } else {
+    ({ error } = await db.from('knockout_results').insert(row));
+  }
   if (error) { showToast('Error: ' + error.message, 'err'); return; }
   koResultsData[id] = row;
   document.getElementById('kocard-'+id).classList.toggle('played', played);
