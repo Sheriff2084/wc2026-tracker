@@ -686,7 +686,6 @@ function buildHalf(side){
   const r32=sm.map(([mid,,sA,sB])=>{
     const tA=mkT(resolveSlot(sA[0],sA[1]),mid),tB=mkT(resolveSlot(sB[0],sB[1]),mid);
     const ko=knockoutMap[mid];
-    const ko=knockoutMap[mid];
     if(ko&&ko.played){tA.winner=tA.name===ko.winner;tA.elim=tA.name===ko.loser;tB.winner=tB.name===ko.winner;tB.elim=tB.name===ko.loser;}
     return[tA,tB];
   });
