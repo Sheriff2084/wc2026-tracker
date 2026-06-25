@@ -131,7 +131,7 @@
   .status-row.dead .sr-team{text-decoration:line-through;text-decoration-color:rgba(255,120,120,0.5)}
   .sr-person{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gold);margin-top:1px}
   .sr-status{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;text-align:right;white-space:nowrap}
-  .sr-status.in{color:var(--green-light)}.sr-status.out{color:#ff9090}.sr-status.pending{color:var(--gold)}
+  .sr-status.in{color:var(--green-light)}.sr-status.out{color:#ff9090}
   .lb-empty{font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--muted);text-align:center;padding:24px;font-style:italic}
 
   .live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green-light);margin-right:6px;animation:blink 1.5s ease-in-out infinite}
@@ -212,10 +212,6 @@
   .bh-grid{display:flex;flex-wrap:wrap;gap:10px}
   .bh-card{display:flex;flex-direction:column;align-items:center;width:88px}
   .bh-card.bh-elim{opacity:0.28;filter:grayscale(1)}
-  .bh-card.bh-pending{opacity:0.65;filter:sepia(0.5) hue-rotate(10deg)}
-  .elim-badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:rgba(255,68,68,0.18);color:#ff9090;border:1px solid rgba(255,68,68,0.35);border-radius:4px;padding:1px 6px;white-space:nowrap}
-  .pending-badge{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;background:rgba(245,197,24,0.12);color:var(--gold);border:1px solid rgba(245,197,24,0.3);border-radius:4px;padding:1px 6px;white-space:nowrap}
-  .team-row.elim{opacity:0.5}
   @keyframes bh-bobble{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(3deg) translateY(-5px)}}
   .bh-head-wrap{animation:bh-bobble 2.6s ease-in-out infinite;transform-origin:center bottom}
   .bh-face{width:66px;height:66px;border-radius:50%;object-fit:cover;border:3px solid rgba(245,197,24,0.5);box-shadow:0 4px 14px rgba(0,0,0,0.55);display:block;margin:0 auto}
@@ -385,9 +381,6 @@ let results           = {};
 let knockoutMap       = {};
 let groupStandings    = {};
 let totalParticipants = 0;
-let manualEliminated  = new Set();
-let eliminatedTeams   = new Set();
-let pendingTeams      = new Set();
 
 function groupMatches(g) {
   const t = GROUP_INFO[g].teams;
@@ -419,36 +412,6 @@ function computeStandings() {
   });
 }
 
-function computeEliminated() {
-  eliminatedTeams = new Set();
-  pendingTeams    = new Set();
-  manualEliminated.forEach(t=>eliminatedTeams.add(t));
-  Object.values(knockoutMap).forEach(k=>{ if(k.played&&k.loser) eliminatedTeams.add(k.loser); });
-  const allGroupsDone = Object.keys(GROUP_INFO).every(g=>groupMatches(g).every(m=>results[m.id]?.played));
-  const thirdPlacers  = [];
-  Object.keys(GROUP_INFO).forEach(g=>{
-    const st=groupStandings[g];
-    if(!st||st.length<4) return;
-    if(groupMatches(g).every(m=>results[m.id]?.played)){
-      eliminatedTeams.add(st[3].team);
-      thirdPlacers.push({team:st[2].team,pts:st[2].pts,gd:st[2].gd,gf:st[2].gf});
-    } else {
-      const thirdPts=st[2].pts;
-      if(thirdPts===0) return;
-      st.forEach(s=>{
-        if(eliminatedTeams.has(s.team)) return;
-        const rem=groupMatches(g).filter(m=>(m.t1===s.team||m.t2===s.team)&&!results[m.id]?.played).length;
-        if(s.pts+rem*3<thirdPts) eliminatedTeams.add(s.team);
-      });
-    }
-  });
-  if(allGroupsDone&&thirdPlacers.length===12){
-    thirdPlacers.sort((a,b)=>(b.pts-a.pts)||(b.gd-a.gd)||(b.gf-a.gf)||a.team.localeCompare(b.team));
-    thirdPlacers.forEach((t,i)=>{ if(i>=8) eliminatedTeams.add(t.team); });
-  } else {
-    thirdPlacers.forEach(t=>{ if(!eliminatedTeams.has(t.team)) pendingTeams.add(t.team); });
-  }
-}
 
 // ── Boot ─────────────────────────────────────────────────────────────────────
 (async () => {
@@ -463,15 +426,13 @@ function computeEliminated() {
 })();
 
 async function loadData() {
-  const [drawsRes, groupRes, knockoutRes, profilesRes, settingsRes] = await Promise.all([
+  const [drawsRes, groupRes, knockoutRes, profilesRes] = await Promise.all([
     db.from('draws').select('team_name, profiles(first_name, last_name, avatar_url)'),
     db.from('group_results').select('*'),
     db.from('knockout_results').select('*'),
     db.from('profiles').select('id', { count: 'exact', head: true }),
-    db.from('draw_settings').select('eliminated_teams').single(),
   ]);
   totalParticipants = profilesRes.count || 0;
-  manualEliminated  = new Set(settingsRes.data?.eliminated_teams || []);
 
   ownerMap = {}; avatarMap = {};
   (drawsRes.data || []).forEach(d => {
@@ -488,7 +449,6 @@ async function loadData() {
   (knockoutRes.data || []).forEach(r => { knockoutMap[r.match_id] = r; });
 
   computeStandings();
-  computeEliminated();
 }
 
 async function setupNav() {
@@ -570,12 +530,10 @@ function renderGroups() {
         <div class="group-hd"><span class="group-lbl">Group ${g}</span><span class="group-date">${GROUP_INFO[g].dates}</span></div>
         <div class="group-teams">${st.map((s,i)=>{
           const m=TM[s.team]||{t:4};const own=ownerMap[s.team];
-          const isElim=eliminatedTeams.has(s.team), isPend=pendingTeams.has(s.team);
-          const badge=isElim?`<span class="elim-badge">Eliminated</span>`:isPend?`<span class="pending-badge">Best 3rd?</span>`:'';
-          return `<div class="team-row ${TC[m.t]}${isElim?' elim':''}" style="gap:10px">
+          return `<div class="team-row ${TC[m.t]}" style="gap:10px">
             ${grpFlag(s.team)}
             <div class="team-info">
-              <div class="team-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${s.team}${badge}</div>
+              <div class="team-name">${s.team}</div>
               ${own?`<div class="team-owner">▸ ${own}</div>`:''}
             </div>
             <div style="text-align:right;padding-left:4px">
@@ -643,8 +601,9 @@ function renderResults() {
     body = `<div class="res-block">${rd.ids.map(id=>{
       const ko=knockoutMap[id];
       if (ko?.played) return fxCard(ko.winner,ko.loser,{score1:ko.score1,score2:ko.score2,played:true});
-      const t1=ko?.team1||'TBD';
-      const t2=ko?.team2||'TBD';
+      const def=R32_MATCHES.find(m=>m[0]===id);
+      const t1=def?(resolveSlot(def[2][0],def[2][1])||'TBD'):'TBD';
+      const t2=def?(resolveSlot(def[3][0],def[3][1])||'TBD'):'TBD';
       return fxCard(t1,t2,null);
     }).join('')}</div>`;
   }
@@ -691,15 +650,11 @@ function fxCard(t1,t2,r) {
   const dt    = [r.match_date, r.kick_off_aest ? r.kick_off_aest+' AEST' : ''].filter(Boolean).join(' · ');
   const venue = r.venue || '';
   const hasSchedule = dt || venue;
-  const team=(name,owner,win,tbd)=>{
-    const isElim=!tbd&&eliminatedTeams.has(name), isPend=!tbd&&pendingTeams.has(name);
-    return `<div class="fx-team">
-      ${tbd ? '<div class="fx-flag-blank"></div>' : flagImg(name)}
-      <span class="fx-name${win?' win':''}${tbd?' tbd':''}">${name}</span>
-      ${owner&&!tbd?`<span class="fx-owner">▸ ${owner}</span>`:''}
-      ${isElim?`<span class="elim-badge">Eliminated</span>`:isPend?`<span class="pending-badge">Best 3rd?</span>`:''}
-    </div>`;
-  };
+  const team=(name,owner,win,tbd)=>`<div class="fx-team">
+    ${tbd ? '<div class="fx-flag-blank"></div>' : flagImg(name)}
+    <span class="fx-name${win?' win':''}${tbd?' tbd':''}">${name}</span>
+    ${owner&&!tbd?`<span class="fx-owner">▸ ${owner}</span>`:''}
+  </div>`;
   const midContent = played
     ? `<div class="fx-scores"><span class="fx-s${t1w?' win':''}">${s1}</span><span class="fx-sep">–</span><span class="fx-s${t2w?' win':''}">${s2}</span></div>
        ${dt?`<div class="fx-datetime">${dt}</div>`:''}
@@ -729,8 +684,8 @@ function mkT(name,matchId){return{name:name||'TBD',owner:name?(ownerMap[name]||n
 function buildHalf(side){
   const sm=R32_MATCHES.filter(m=>m[1]===side);
   const r32=sm.map(([mid,,sA,sB])=>{
+    const tA=mkT(resolveSlot(sA[0],sA[1]),mid),tB=mkT(resolveSlot(sB[0],sB[1]),mid);
     const ko=knockoutMap[mid];
-    const tA=mkT(ko?.team1||null,mid),tB=mkT(ko?.team2||null,mid);
     const ko=knockoutMap[mid];
     if(ko&&ko.played){tA.winner=tA.name===ko.winner;tA.elim=tA.name===ko.loser;tB.winner=tB.name===ko.winner;tB.elim=tB.name===ko.loser;}
     return[tA,tB];
@@ -799,7 +754,7 @@ function renderBracket(){
 }
 
 // ── Bobblehead helper ─────────────────────────────────────────────────────────
-function makeBobblehead(teamName, ownerName, eliminated, pending=false) {
+function makeBobblehead(teamName, ownerName, eliminated) {
   const avatar    = avatarMap[teamName];
   const flagVal   = FLAG_CODES[teamName];
   const flagSrc   = flagVal ? (flagVal.startsWith('http') ? flagVal : `https://flagcdn.com/w80/${flagVal}.png`) : null;
@@ -807,8 +762,7 @@ function makeBobblehead(teamName, ownerName, eliminated, pending=false) {
   const initial   = ownerName ? ownerName.charAt(0).toUpperCase() : '?';
   // Deterministic stagger so each bobblehead is slightly out of phase
   const delay = ((teamName.charCodeAt(0) + teamName.charCodeAt(teamName.length - 1)) % 10) * 0.28;
-  const cls = eliminated ? ' bh-elim' : pending ? ' bh-pending' : '';
-  return `<div class="bh-card${cls}">
+  return `<div class="bh-card${eliminated ? ' bh-elim' : ''}">
     <div class="bh-head-wrap" style="animation-delay:${delay}s">
       ${avatar
         ? `<img src="${avatar}" class="bh-face" alt="${firstName}">`
@@ -823,9 +777,13 @@ function makeBobblehead(teamName, ownerName, eliminated, pending=false) {
 
 // ── Who's Left tab ────────────────────────────────────────────────────────────
 function renderLeaderboard(){
-  const eliminated = eliminatedTeams;
-  const pending    = pendingTeams;
+  const eliminated=new Set();
   const champ=(()=>{const f=Object.values(knockoutMap).find(k=>k.match_id==='FINAL'&&k.played);return f?f.winner:null;})();
+  Object.values(knockoutMap).forEach(k=>{if(k.played&&k.loser)eliminated.add(k.loser);});
+  Object.keys(GROUP_INFO).forEach(g=>{
+    if(!groupMatches(g).every(m=>results[m.id]&&results[m.id].played))return;
+    (groupStandings[g]||[]).forEach((s,i)=>{if(i>=2)eliminated.add(s.team);});
+  });
 
   function teamStatus(team){
     if(champ&&team===champ) return{label:'🏆 CHAMPION',cls:'in'};
@@ -834,7 +792,6 @@ function renderLeaderboard(){
       if(k){const map={R32:'Lost in R32',R16:'Lost in R16',QF:'Lost in QF',SF:'Lost in SF',FINAL:'Runner-up'};return{label:map[k.match_id.replace(/-.*$/,'')]||'Eliminated',cls:'out'};}
       return{label:'Out (group stage)',cls:'out'};
     }
-    if(pending.has(team)) return{label:'Best 3rd?',cls:'pending'};
     let furthest='Group stage';
     Object.values(knockoutMap).forEach(k=>{
       if(!k.played||k.winner!==team) return;
@@ -848,47 +805,41 @@ function renderLeaderboard(){
   const inR=[],outR=[];
   drawnTeams.forEach(([team,person])=>{
     const st=teamStatus(team);
-    (st.cls==='out'?outR:inR).push({team,person,status:st.label,cls:st.cls});
+    (st.cls==='out'?outR:inR).push({team,person,status:st.label});
   });
-  const ro={'Champion':6,'Into Final':5,'Into SF':4,'Into QF':3,'Into R16':2,'Group stage':1,'Best 3rd?':0};
+  const ro={'Champion':6,'Into Final':5,'Into SF':4,'Into QF':3,'Into R16':2,'Group stage':1};
   inR.sort((a,b)=>(ro[b.status]||0)-(ro[a.status]||0)||a.person.localeCompare(b.person));
   outR.sort((a,b)=>a.person.localeCompare(b.person));
-
-  const rowHTML=(r)=>{
-    const av=avatarMap[r.team];
-    const alive=r.cls!=='out';
-    const borderCol=r.cls==='pending'?'rgba(245,197,24,0.35)':alive?'rgba(29,184,122,0.4)':'rgba(255,80,80,0.25)';
+  const rowHTML=(r,alive)=>{
+    const av = avatarMap[r.team];
     return `<div class="status-row ${alive?'alive':'dead'}">
       ${av
-        ?`<img src="${av}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${borderCol}">`
-        :`<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);flex-shrink:0;border:2px solid rgba(255,255,255,0.08)"></div>`}
+        ? `<img src="${av}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${alive?'rgba(29,184,122,0.4)':'rgba(255,80,80,0.25)'}">`
+        : `<div style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);flex-shrink:0;border:2px solid rgba(255,255,255,0.08)"></div>`}
       <div style="flex:1;min-width:0">
         <div class="sr-team">${r.team}</div>
         <div class="sr-person">▸ ${r.person}</div>
       </div>
-      <div class="sr-status ${r.cls}">${r.status}</div>
+      <div class="sr-status ${alive?'in':'out'}">${r.status}</div>
     </div>`;
   };
-
-  // Bobblehead gallery — three sections
-  const allDrawn=Object.entries(ownerMap).sort((a,b)=>a[1].localeCompare(b[1])||a[0].localeCompare(b[0]));
-  const bhIn      = allDrawn.filter(([t])=>!eliminated.has(t)&&!pending.has(t));
-  const bhPending = allDrawn.filter(([t])=> pending.has(t));
-  const bhOut     = allDrawn.filter(([t])=> eliminated.has(t));
+  // Bobblehead gallery
+  const allDrawn = Object.entries(ownerMap).sort((a,b)=>a[1].localeCompare(b[1])||a[0].localeCompare(b[0]));
+  const bhIn  = allDrawn.filter(([t])=>!eliminated.has(t));
+  const bhOut = allDrawn.filter(([t])=> eliminated.has(t));
   const bhHtml = allDrawn.length ? `<div class="bh-section">
-    ${bhIn.length      ?`<div class="bh-section-lbl">✓ Still In</div><div class="bh-grid">${bhIn.map(([t,o])=>makeBobblehead(t,o,false,false)).join('')}</div>`:''}
-    ${bhPending.length ?`<div class="bh-section-lbl" style="margin-top:18px;color:var(--gold)">⏳ Best 3rd?</div><div class="bh-grid">${bhPending.map(([t,o])=>makeBobblehead(t,o,false,true)).join('')}</div>`:''}
-    ${bhOut.length     ?`<div class="bh-section-lbl" style="margin-top:18px">✕ Eliminated</div><div class="bh-grid">${bhOut.map(([t,o])=>makeBobblehead(t,o,true,false)).join('')}</div>`:''}
+    ${bhIn.length  ? `<div class="bh-section-lbl">✓ Still In</div><div class="bh-grid">${bhIn.map(([t,o])=>makeBobblehead(t,o,false)).join('')}</div>` : ''}
+    ${bhOut.length ? `<div class="bh-section-lbl" style="margin-top:18px">✕ Eliminated</div><div class="bh-grid">${bhOut.map(([t,o])=>makeBobblehead(t,o,true)).join('')}</div>` : ''}
   </div><div style="height:1px;background:var(--border);margin-bottom:22px"></div>` : '';
 
   document.getElementById('lb-inner').innerHTML= bhHtml + `<div class="lb-two-col">
     <div class="lb-col">
       <div class="lb-col-hd alive-hd"><span>✓ Still In</span><span class="lb-count">${inR.length} teams</span></div>
-      <div>${inR.length?inR.map(r=>rowHTML(r)).join(''):'<div class="lb-empty">Draw not yet complete</div>'}</div>
+      <div>${inR.length?inR.map(r=>rowHTML(r,true)).join(''):'<div class="lb-empty">Draw not yet complete</div>'}</div>
     </div>
     <div class="lb-col">
       <div class="lb-col-hd dead-hd"><span>✕ Eliminated</span><span class="lb-count">${outR.length} teams</span></div>
-      <div>${outR.length?outR.map(r=>rowHTML(r)).join(''):'<div class="lb-empty">None eliminated yet</div>'}</div>
+      <div>${outR.length?outR.map(r=>rowHTML(r,false)).join(''):'<div class="lb-empty">None eliminated yet</div>'}</div>
     </div>
   </div>`;
 }
