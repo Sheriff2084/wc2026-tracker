@@ -364,14 +364,16 @@ const RD_LABELS = ["Round of 32","Round of 16","Quarter-Finals","Semi-Finals"];
 const RD_DATES  = ["28 Jun–3 Jul","4–7 Jul","9–11 Jul","14–15 Jul"];
 
 const R32_MATCHES = [
-  ["R32-1","L",[1,"A"],[2,"B"]],["R32-2","L",[1,"C"],[2,"D"]],
-  ["R32-3","L",[1,"B"],[2,"A"]],["R32-4","L",[1,"D"],[2,"C"]],
-  ["R32-5","L",[1,"E"],[2,"F"]],["R32-6","L",[1,"G"],[2,"H"]],
-  ["R32-7","L",[1,"F"],[2,"E"]],["R32-8","L",[1,"H"],[2,"G"]],
-  ["R32-9","R",[1,"I"],[2,"J"]],["R32-10","R",[1,"K"],[2,"L"]],
-  ["R32-11","R",[1,"J"],[2,"I"]],["R32-12","R",[1,"L"],[2,"K"]],
-  ["R32-13","R",[2,"I"],[2,"K"]],["R32-14","R",[2,"J"],[2,"L"]],
-  ["R32-15","R",[1,"I"],[2,"L"]],["R32-16","R",[1,"K"],[2,"J"]],
+  // Left bracket, top to bottom
+  ["M74","L",[1,"C"],[2,"D"]],["M77","L",[1,"E"],[2,"F"]],
+  ["M73","L",[1,"A"],[2,"B"]],["M75","L",[1,"B"],[2,"A"]],
+  ["M83","L",[1,"J"],[2,"I"]],["M84","L",[1,"L"],[2,"K"]],
+  ["M81","L",[1,"I"],[2,"J"]],["M82","L",[1,"K"],[2,"L"]],
+  // Right bracket, top to bottom
+  ["M76","R",[1,"D"],[2,"C"]],["M78","R",[1,"G"],[2,"H"]],
+  ["M79","R",[1,"F"],[2,"E"]],["M80","R",[1,"H"],[2,"G"]],
+  ["M86","R",[2,"J"],[2,"L"]],["M88","R",[1,"K"],[2,"J"]],
+  ["M85","R",[2,"I"],[2,"K"]],["M87","R",[1,"I"],[2,"L"]],
 ];
 
 // ── Live data (from Supabase) ────────────────────────────────────────────────
@@ -568,11 +570,11 @@ const flagImg = name => {
   return `<img src="${src}" class="fx-flag-img" alt="${name}" loading="lazy">`;
 };
 const KO_RDS = [
-  {id:'r32',   label:'Round of 32',    ids:['R32-1','R32-2','R32-3','R32-4','R32-5','R32-6','R32-7','R32-8','R32-9','R32-10','R32-11','R32-12','R32-13','R32-14','R32-15','R32-16']},
-  {id:'r16',   label:'Round of 16',    ids:['R16-1','R16-2','R16-3','R16-4','R16-5','R16-6','R16-7','R16-8']},
-  {id:'qf',    label:'Quarter-Finals', ids:['QF-1','QF-2','QF-3','QF-4']},
-  {id:'sf',    label:'Semi-Finals',    ids:['SF-1','SF-2']},
-  {id:'final', label:'Final',          ids:['FINAL']},
+  {id:'r32',   label:'Round of 32',    ids:['M73','M74','M75','M76','M77','M78','M79','M80','M81','M82','M83','M84','M85','M86','M87','M88']},
+  {id:'r16',   label:'Round of 16',    ids:['M89','M90','M91','M92','M93','M94','M95','M96']},
+  {id:'qf',    label:'Quarter-Finals', ids:['M97','M98','M99','M100']},
+  {id:'sf',    label:'Semi-Finals',    ids:['M101','M102']},
+  {id:'final', label:'Final',          ids:['M104']},
 ];
 
 let activeRound='group', activeGrp='all';
@@ -690,9 +692,9 @@ function buildHalf(side){
     return[tA,tB];
   });
   const rounds=[r32];
-  const r16Ids=side==='L'?['R16-1','R16-2','R16-3','R16-4']:['R16-5','R16-6','R16-7','R16-8'];
-  const qfIds=side==='L'?['QF-1','QF-2']:['QF-3','QF-4'];
-  const sfIds=side==='L'?['SF-1']:['SF-2'];
+  const r16Ids=side==='L'?['M89','M90','M91','M92']:['M93','M94','M95','M96'];
+  const qfIds=side==='L'?['M97','M98']:['M99','M100'];
+  const sfIds=side==='L'?['M101']:['M102'];
   const roundIds=[r16Ids,qfIds,sfIds];
   for(let r=0;r<3;r++){
     const prev=rounds[r],next=[];
@@ -740,7 +742,7 @@ function renderBracket(){
   const sfL=L[3][0],sfR=R[3][0],tbdF={name:'TBD',owner:null,id:'tbd'};
   const finL=sfL?(sfL.find(t=>t.winner)||tbdF):tbdF;
   const finR=sfR?(sfR.find(t=>t.winner)||tbdF):tbdF;
-  const fko=knockoutMap['FINAL'];
+  const fko=knockoutMap['M104'];
   const champ=fko&&fko.played?{name:fko.winner,owner:ownerMap[fko.winner]||null}:null;
   html+=`<div class="b-gap"></div><div class="b-center">
     <div class="fin-lbl">🏆 Final</div><div class="fin-date">19 July · MetLife Stadium</div>
@@ -775,9 +777,10 @@ function makeBobblehead(teamName, ownerName, eliminated) {
 }
 
 // ── Who's Left tab ────────────────────────────────────────────────────────────
+function koRound(mid){const n=parseInt(mid.replace('M',''));if(n>=73&&n<=88)return'R32';if(n>=89&&n<=96)return'R16';if(n>=97&&n<=100)return'QF';if(n>=101&&n<=102)return'SF';if(n===104)return'Final';return'';}
 function renderLeaderboard(){
   const eliminated=new Set();
-  const champ=(()=>{const f=Object.values(knockoutMap).find(k=>k.match_id==='FINAL'&&k.played);return f?f.winner:null;})();
+  const champ=(()=>{const f=Object.values(knockoutMap).find(k=>k.match_id==='M104'&&k.played);return f?f.winner:null;})();
   Object.values(knockoutMap).forEach(k=>{if(k.played&&k.loser)eliminated.add(k.loser);});
   Object.keys(GROUP_INFO).forEach(g=>{
     if(!groupMatches(g).every(m=>results[m.id]&&results[m.id].played))return;
@@ -788,14 +791,14 @@ function renderLeaderboard(){
     if(champ&&team===champ) return{label:'🏆 CHAMPION',cls:'in'};
     if(eliminated.has(team)){
       const k=Object.values(knockoutMap).find(k=>k.played&&k.loser===team);
-      if(k){const map={R32:'Lost in R32',R16:'Lost in R16',QF:'Lost in QF',SF:'Lost in SF',FINAL:'Runner-up'};return{label:map[k.match_id.replace(/-.*$/,'')]||'Eliminated',cls:'out'};}
+      if(k){const map={R32:'Lost in R32',R16:'Lost in R16',QF:'Lost in QF',SF:'Lost in SF',Final:'Runner-up'};return{label:map[koRound(k.match_id)]||'Eliminated',cls:'out'};}
       return{label:'Out (group stage)',cls:'out'};
     }
     let furthest='Group stage';
     Object.values(knockoutMap).forEach(k=>{
       if(!k.played||k.winner!==team) return;
-      const map={R32:'Into R16',R16:'Into QF',QF:'Into SF',SF:'Into Final',FINAL:'Champion'};
-      furthest=map[k.match_id.replace(/-.*$/,'')]||furthest;
+      const map={R32:'Into R16',R16:'Into QF',QF:'Into SF',SF:'Into Final',Final:'Champion'};
+      furthest=map[koRound(k.match_id)]||furthest;
     });
     return{label:furthest,cls:'in'};
   }
