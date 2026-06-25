@@ -643,9 +643,8 @@ function renderResults() {
     body = `<div class="res-block">${rd.ids.map(id=>{
       const ko=knockoutMap[id];
       if (ko?.played) return fxCard(ko.winner,ko.loser,{score1:ko.score1,score2:ko.score2,played:true});
-      const def=R32_MATCHES.find(m=>m[0]===id);
-      const t1=def?(resolveSlot(def[2][0],def[2][1])||'TBD'):'TBD';
-      const t2=def?(resolveSlot(def[3][0],def[3][1])||'TBD'):'TBD';
+      const t1=ko?.team1||'TBD';
+      const t2=ko?.team2||'TBD';
       return fxCard(t1,t2,null);
     }).join('')}</div>`;
   }
@@ -730,7 +729,8 @@ function mkT(name,matchId){return{name:name||'TBD',owner:name?(ownerMap[name]||n
 function buildHalf(side){
   const sm=R32_MATCHES.filter(m=>m[1]===side);
   const r32=sm.map(([mid,,sA,sB])=>{
-    const tA=mkT(resolveSlot(sA[0],sA[1]),mid),tB=mkT(resolveSlot(sB[0],sB[1]),mid);
+    const ko=knockoutMap[mid];
+    const tA=mkT(ko?.team1||null,mid),tB=mkT(ko?.team2||null,mid);
     const ko=knockoutMap[mid];
     if(ko&&ko.played){tA.winner=tA.name===ko.winner;tA.elim=tA.name===ko.loser;tB.winner=tB.name===ko.winner;tB.elim=tB.name===ko.loser;}
     return[tA,tB];
